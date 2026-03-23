@@ -1,0 +1,15 @@
+# ═══════════════════════════════════════════════════════════════
+#  .env
+#  Variables d'environnement — JAMAIS commité sur GitHub.
+#  Ce fichier est listé dans .gitignore.
+#
+#  Si tu utilises Vite : ces variables sont accessibles via
+#  import.meta.env.VITE_SUPABASE_URL etc.
+#
+#  Si tu déploies sur Netlify / Vercel : copie ces valeurs
+#  dans le dashboard de ton hébergeur (Environment Variables).
+# ═══════════════════════════════════════════════════════════════
+
+# ── Supabase ──────────────────────────────────────────────────
+VITE_SUPABASE_URL=https://wzjsjmttovuhqsaosgzt.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_XB90iEJcRd2fGrjEkCgfoA_BnRV-Xnh
