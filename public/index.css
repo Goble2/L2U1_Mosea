@@ -1,0 +1,213 @@
+/* ═══════════════════════════════════════════
+   MOSEA ANALYSE — CSS Connexion
+   Aligné sur le design Professeur / Élève
+═══════════════════════════════════════════ */
+
+/* ── Variables (identiques au reste de l'app) ── */
+:root {
+    --bg:             #f0f2f7;
+    --surface:        #ffffff;
+    --border:         #e0e4ef;
+    --accent:         #4f6ef7;
+    --accent-dark:    #3a56d4;
+    --accent-soft:    #eef1fe;
+    --text-primary:   #1a1f36;
+    --text-secondary: #6b7280;
+    --text-muted:     #9ca3af;
+    --shadow-sm:      0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md:      0 4px 12px rgba(0,0,0,.08);
+    --radius:         10px;
+    --radius-sm:      6px;
+    --font:           'DM Sans', sans-serif;
+    --font-mono:      'DM Mono', monospace;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font);
+    background-color: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ══════════════════════════════════════════
+   WRAPPER
+══════════════════════════════════════════ */
+
+.login-wrapper {
+    width: 100%;
+    max-width: 400px;
+    padding: 24px 16px;
+}
+
+/* ══════════════════════════════════════════
+   CARD
+══════════════════════════════════════════ */
+
+.login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+/* ── En-tête de la card (style app-header) ── */
+.login-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 60px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+
+.brand-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.login-subtitle {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+/* ── Corps du formulaire ── */
+.login-body {
+    padding: 24px;
+    background: var(--bg);
+}
+
+/* ══════════════════════════════════════════
+   FORM GROUPS
+══════════════════════════════════════════ */
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    transition: border-color .15s, box-shadow .15s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Select : petite flèche custom */
+.form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,110,247,.1);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Champ mot de passe — police mono pour les points */
+#mdp {
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+}
+
+/* ══════════════════════════════════════════
+   MESSAGE D'ERREUR
+══════════════════════════════════════════ */
+
+.msg-erreur {
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: #e74c3c;
+    min-height: 1.1em;
+    margin-top: 12px;
+}
+
+/* ══════════════════════════════════════════
+   BOUTON CONNEXION
+══════════════════════════════════════════ */
+
+.btn-connexion {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .1s, box-shadow .15s;
+    box-shadow: 0 2px 8px rgba(79,110,247,.25);
+}
+
+.btn-connexion:hover {
+    background: var(--accent-dark);
+    box-shadow: 0 4px 14px rgba(79,110,247,.35);
+}
+
+.btn-connexion:active {
+    transform: scale(.98);
+}
