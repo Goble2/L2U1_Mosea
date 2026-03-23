@@ -64,7 +64,7 @@ export async function connecter({ nom, prenom, mode, mdp, role }) {
  */
 export function deconnecter() {
     sessionStorage.clear();
-    window.location.href = '/index.html';
+    window.location.href = '/connexion.html';
 }
 
 // ═══════════════════════════════════════════════════════════════

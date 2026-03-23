@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 //  src/login.js
-//  Gère le formulaire de connexion de index.html.
+//  Gère le formulaire de connexion de connexion.html.
 //  Importe connecter() depuis auth.js pour ne pas dupliquer
 //  la logique Supabase.
 // ═══════════════════════════════════════════════════════════════
