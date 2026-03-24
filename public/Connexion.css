@@ -211,18 +211,15 @@ body {
 .btn-connexion:active {
     transform: scale(.98);
 }
+
 .btn-accueil {
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
     text-decoration: none;
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    transition: background .15s, color .15s;
+    transition: color .15s;
 }
 
 .btn-accueil:hover {
-    background: var(--accent-soft);
     color: var(--accent);
 }
