@@ -10,7 +10,7 @@
  * @example formaterTemps(60)  → '1m'
  * @example formaterTemps(90)  → '1m30s'
  */
-export function formaterTemps(secondes) {
+function formaterTemps(secondes) {
     if (secondes === 0) return '0';
     const m = Math.floor(secondes / 60);
     const s = secondes % 60;
@@ -23,7 +23,7 @@ export function formaterTemps(secondes) {
  * Formate une date ISO (YYYY-MM-DD) en date lisible française.
  * @example formaterDate('2024-11-03') → '3 novembre 2024'
  */
-export function formaterDate(dateStr) {
+function formaterDate(dateStr) {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('fr-FR', {
         day:   'numeric',
@@ -36,7 +36,7 @@ export function formaterDate(dateStr) {
  * Formate une heure HH:MM:SS en heure courte.
  * @example formaterHeure('14:32:00') → '14h32'
  */
-export function formaterHeure(heureStr) {
+function formaterHeure(heureStr) {
     if (!heureStr) return '—';
     const [h, m] = heureStr.split(':');
     return `${h}h${m}`;
@@ -46,7 +46,7 @@ export function formaterHeure(heureStr) {
  * Met la première lettre en majuscule, le reste en minuscule.
  * @example capitaliser('dupont') → 'Dupont'
  */
-export function capitaliser(str) {
+function capitaliser(str) {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
@@ -55,6 +55,6 @@ export function capitaliser(str) {
  * Formate un nom complet en MAJUSCULES.
  * @example nomComplet('dupont', 'jean') → 'JEAN DUPONT'
  */
-export function nomComplet(nom, prenom) {
+function nomComplet(nom, prenom) {
     return `${prenom.toUpperCase()} ${nom.toUpperCase()}`;
 }

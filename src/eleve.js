@@ -4,7 +4,7 @@ let donneesSession = null;
 async function PageEleve() {
     const utilisateur = requireAuth('élève');
 
-    document.getElementById('userInfo').textContent = nomComplet(utilisateur.nom, utilisateur.prenom);
+    document.getElementById('userInfo').textContent = String(utilisateur.nom) + ' ' + String(utilisateur.prenom);
     document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
 
     donneesSession = await recupererSessions(utilisateur.idEleve);

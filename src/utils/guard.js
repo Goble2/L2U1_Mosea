@@ -9,8 +9,6 @@
 //    const utilisateur = requireAuth('professeur');  // page prof
 // ═══════════════════════════════════════════════════════════════
 
-import { getUtilisateur } from '../auth.js';
-
 /**
  * Vérifie la session. Redirige vers /index.html si :
  *   - Aucun utilisateur en session
@@ -19,7 +17,7 @@ import { getUtilisateur } from '../auth.js';
  * @param {string} [roleAttendu]  'élève' | 'professeur' | undefined
  * @returns {object} L'utilisateur si valide (sinon la page a déjà redirigé)
  */
-export function requireAuth(roleAttendu) {
+function requireAuth(roleAttendu) {
     const user = getUtilisateur();
 
     if (!user) {

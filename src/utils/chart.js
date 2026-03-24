@@ -4,8 +4,6 @@
 //  Partagée entre indexEleve.js et indexProfesseur.js.
 // ═══════════════════════════════════════════════════════════════
 
-import { AXES }          from '../config.js';
-import { formaterTemps } from './format.js';
 
 // ═══════════════════════════════════════════════════════════════
 //  AXES
@@ -16,7 +14,7 @@ import { formaterTemps } from './format.js';
  * Fallback sur Subjectif si le type est inconnu.
  * @param {'Subjectif'|'Objectif'} type
  */
-export function getAxe(type) {
+function getAxe(type) {
     return AXES[type] || AXES.Subjectif;
 }
 
@@ -36,7 +34,7 @@ export function getAxe(type) {
  * @param {number}   tempsMax  - Durée totale (pour normaliser l'axe X)
  * @returns {string} Points au format SVG "x1,y1 x2,y2 ..."
  */
-export function genererPoints(valeurs, temps, valMax, tempsMax) {
+function genererPoints(valeurs, temps, valMax, tempsMax) {
     const duree = tempsMax || temps[temps.length - 1];
     return valeurs.map((v, i) => {
         const x = 10 + (temps[i] / duree) * 85;
@@ -55,7 +53,7 @@ export function genererPoints(valeurs, temps, valMax, tempsMax) {
  * @param {number} dureeTotal - Durée totale en secondes
  * @returns {string} HTML des ticks
  */
-export function genererTicksHTML(dureeTotal) {
+function genererTicksHTML(dureeTotal) {
     if (!dureeTotal || dureeTotal === 0) return '';
     const candidats = [5, 10, 15, 20, 30, 60, 120, 180, 300, 600];
     const pas = candidats.find(p => dureeTotal / p <= 8) || 600;
@@ -76,7 +74,7 @@ export function genererTicksHTML(dureeTotal) {
  * @param {'Subjectif'|'Objectif'} type
  * @returns {string} SVG <line> elements
  */
-export function buildGridLines(type) {
+function buildGridLines(type) {
     const { yTicks, valMax } = getAxe(type);
     return yTicks.map(v => {
         const y = (95 - (v / valMax * 90)).toFixed(1);
@@ -97,7 +95,7 @@ export function buildGridLines(type) {
  * @param {string} [couleur]      - Couleur principale (défaut: var(--accent))
  * @returns {string} HTML complet du graphe
  */
-export function buildChartHTML(polylinesHTML, ticksXHTML, type, couleur = 'var(--accent)') {
+function buildChartHTML(polylinesHTML, ticksXHTML, type, couleur = 'var(--accent)') {
     const { yTicks } = getAxe(type);
     const yHTML = yTicks.map(v => `<span class="y-tick">${v}</span>`).join('');
 
@@ -122,7 +120,7 @@ export function buildChartHTML(polylinesHTML, ticksXHTML, type, couleur = 'var(-
  * @param {string}   type    - 'Subjectif' | 'Objectif'
  * @returns {string} HTML du graphe
  */
-export function buildSingleChart(valeurs, temps, type) {
+function buildSingleChart(valeurs, temps, type) {
     const { valMax } = getAxe(type);
     const duree     = temps[temps.length - 1];
     const pts       = genererPoints(valeurs, temps, valMax, duree);
@@ -139,7 +137,7 @@ export function buildSingleChart(valeurs, temps, type) {
  * @param {number[]} tab
  * @returns {{ min: number, max: number, moyenne: number }}
  */
-export function moyenneMinMax(tab) {
+function moyenneMinMax(tab) {
     let somme = 0, min = tab[0], max = tab[0];
     for (const v of tab) {
         somme += v;
