@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosea Analyse — Professeur</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="AnalyseProfesseur.css">
+</head>
+<body>
+
+<div class="app">
+
+    <header class="app-header">
+        <div class="header-brand">
+            <span class="brand-dot"></span>
+            <h1>Mosea Analyse Professeur</h1>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="toggleAide()">Aide</button>
+            <button class="header-btn" id="btn-params" onclick="toggleParametres()">Paramètres</button>
+            <button class="header-btn" id="btn-deconnexion">Se déconnecter</button>
+            <p id="userInfo" class="user-info">Chargement...</p>
+        </div>
+    </header>
+
+    <!-- Modal Aide -->
+    <div id="modal-aide" class="modal-overlay" style="display:none" onclick="closeModal('modal-aide')">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Aide</h2>
+                <button class="modal-close" onclick="closeModal('modal-aide')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="aide-section">
+                    <h3>Navigation</h3>
+                    <p>Cliquez sur une session dans la colonne gauche pour afficher les résultats.</p>
+                </div>
+                <div class="aide-section">
+                    <h3>Élèves présents</h3>
+                    <p>Sélectionnez <strong>Tous les élèves</strong> pour une vue agrégée, ou cliquez sur un élève pour ses données individuelles.</p>
+                </div>
+                <div class="aide-section">
+                    <h3>Graphes</h3>
+                    <p>L'axe X représente la durée de la session, l'axe Y la valeur de la mesure.</p>
+                </div>
+                <div class="aide-section">
+                    <h3>Paramètres</h3>
+                    <p>Depuis Paramètres, vous pouvez supprimer une session par son ID ou supprimer votre compte.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="app-body">
+
+        <!-- Colonne gauche : Sessions -->
+        <aside class="col-sessions">
+            <div class="col-header"><h2>Sessions précédentes</h2></div>
+            <div class="scroll-pane" id="sessions-list"></div>
+        </aside>
+
+        <!-- Colonne droite -->
+        <div class="col-right">
+
+            <!-- Panneau Paramètres -->
+            <div id="panel-params" class="params-panel" style="display:none">
+                <div class="col-header params-panel-header">
+                    <h2>Paramètres</h2>
+                    <button class="modal-close" onclick="toggleParametres()">✕</button>
+                </div>
+                <div class="params-body">
+
+                    <div class="params-block">
+                        <div class="params-block-icon">🗑</div>
+                        <div class="params-block-content">
+                            <h3>Supprimer une session</h3>
+                            <p>Entrez l'identifiant de la session à supprimer. Cette action est irréversible.</p>
+                            <div class="params-input-row">
+                                <input type="number" id="input-session-id" class="params-input" placeholder="ID de session…" min="1">
+                                <button class="params-btn params-btn--danger" onclick="supprimerSession()">Supprimer</button>
+                            </div>
+                            <p id="msg-session" class="params-msg"></p>
+                        </div>
+                    </div>
+
+                    <div class="params-block params-block--critical">
+                        <div class="params-block-icon">⚠️</div>
+                        <div class="params-block-content">
+                            <h3>Supprimer le compte</h3>
+                            <p>Supprime définitivement votre compte ainsi que toutes vos sessions. Cette action est <strong>irréversible</strong>.</p>
+                            <button class="params-btn params-btn--danger" onclick="confirmerSuppressionCompte()">Supprimer mon compte</button>
+                            <p id="msg-compte" class="params-msg"></p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Contenu principal -->
+            <div id="main-content" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+
+                <!-- Élèves présents -->
+                <section class="panel panel-eleves">
+                    <div class="panel-header"><h2>Élèves présents</h2></div>
+                    <div class="scroll-pane" id="list-eleve"></div>
+                </section>
+
+                <!-- Résultats de session -->
+                <section class="panel panel-results">
+                    <div class="panel-header"><h2>Résultats de la session</h2></div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card"><span class="stat-label">Maximum</span><span class="stat-value" id="Max">—</span></div>
+                        <div class="stat-card"><span class="stat-label">Minimum</span><span class="stat-value" id="Min">—</span></div>
+                        <div class="stat-card"><span class="stat-label">Moyenne</span><span class="stat-value" id="Avg">—</span></div>
+                        <div class="stat-card"><span class="stat-label">Durée</span><span class="stat-value" id="Mesure">—</span></div>
+                        <div class="stat-card"><span class="stat-label">Heure</span><span class="stat-value" id="time">—</span></div>
+                        <div class="stat-card"><span class="stat-label">Date</span><span class="stat-value" id="date">—</span></div>
+                    </div>
+
+                    <div class="chart-wrapper">
+                        <h3 id="chart-title" class="chart-title">Graphe</h3>
+                        <div id="graphe-container"></div>
+                    </div>
+
+                </section>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Ordre impératif : supabase CDN → config → supabase client → auth → utils → professeur -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../src/config.js"></script>
+<script src="../src/supabase.js"></script>
+<script src="../src/auth.js"></script>
+<script src="../src/utils/guard.js"></script>
+<script src="../src/utils/format.js"></script>
+<script src="../src/utils/chart.js"></script>
+<script src="../src/professeur.js"></script>
+
+</body>
+</html>

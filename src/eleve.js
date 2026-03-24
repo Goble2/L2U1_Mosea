@@ -1,33 +1,12 @@
-// ═══════════════════════════════════════════════════════════════
-//  src/eleve.js
-//  Logique complète de la page Élève.
-//  Importer dans indexEleve.html avec type="module".
-// ═══════════════════════════════════════════════════════════════
-
-import { db }                                         from './supabase.js';
-import { getUtilisateur, deconnecter }                from './auth.js';
-import { requireAuth }                                from './utils/guard.js';
-import { nomComplet }                                 from './utils/format.js';
-import { buildSingleChart, moyenneMinMax, getAxe }    from './utils/chart.js';
-import { TABLES }                                     from './config.js';
-
-// ── État local ────────────────────────────────────────────────
 let donneesSession = null;
 
-// ═══════════════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════════════
-
+// ── Init ──────────────────────────────────────────────────────
 async function PageEleve() {
-    // Guard — stoppe le script si non authentifié ou mauvais rôle
     const utilisateur = requireAuth('élève');
 
     document.getElementById('userInfo').textContent = nomComplet(utilisateur.nom, utilisateur.prenom);
+    document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
 
-    // Bouton déconnexion
-    document.getElementById('btn-deconnexion')?.addEventListener('click', deconnecter);
-
-    // Chargement des sessions
     donneesSession = await recupererSessions(utilisateur.idEleve);
 
     if (!donneesSession || donneesSession.length === 0) {
@@ -35,7 +14,6 @@ async function PageEleve() {
         return;
     }
 
-    // Tri : plus récente en premier
     donneesSession.sort((a, b) =>
         new Date(`${b.date}T${b.heur}`) - new Date(`${a.date}T${a.heur}`)
     );
@@ -44,10 +22,7 @@ async function PageEleve() {
     changerSession(0);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  SUPABASE
-// ═══════════════════════════════════════════════════════════════
-
+// ── Supabase ──────────────────────────────────────────────────
 async function recupererSessions(idEleve) {
     const { data, error } = await db
         .from(TABLES.SESSION_ELEVE)
@@ -62,54 +37,36 @@ async function recupererSessions(idEleve) {
     return data;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  LISTE DES SESSIONS (colonne gauche)
-// ═══════════════════════════════════════════════════════════════
-
+// ── Liste sessions ────────────────────────────────────────────
 function afficherListeSessions(sessions) {
     const container = document.getElementById('sessions-list');
     if (!container) return;
-
     container.innerHTML = sessions.map((s, i) => `
-        <div class="session-card" data-index="${i}" onclick="window._changerSession(${i})">
+        <div class="session-card" onclick="changerSession(${i})">
             <p><strong>Session du ${s.date} à ${s.heur}</strong></p>
             <p>Type de mesure : ${s.TypeMesure}</p>
         </div>
     `).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  CHANGEMENT DE SESSION
-// ═══════════════════════════════════════════════════════════════
-
+// ── Changement de session ─────────────────────────────────────
 function changerSession(index) {
-    // Carte active
     document.querySelectorAll('.session-card')
         .forEach((el, i) => el.classList.toggle('active', i === index));
-
-    // Reset UI
     resetStatsUI();
-
-    // Affichage
     afficherResultat(index);
 }
 
 function resetStatsUI() {
-    const champs = ['Result', 'Max', 'Min', 'Avg', 'duree', 'time', 'date', 'chart-title'];
-    const valeurs = {
-        'Result':      'Résultats de la session',
-        'chart-title': 'Graphe',
-    };
-    champs.forEach(id => {
+    document.getElementById('Result').textContent      = 'Résultats de la session';
+    document.getElementById('chart-title').textContent = 'Graphe';
+    ['Max', 'Min', 'Avg', 'duree', 'time', 'date'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = valeurs[id] ?? '—';
+        if (el) el.textContent = '—';
     });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  AFFICHAGE RÉSULTAT
-// ═══════════════════════════════════════════════════════════════
-
+// ── Affichage résultat ────────────────────────────────────────
 function afficherResultat(index) {
     const session = donneesSession[index];
     const valeurs = session.DataMesure?.valeurs;
@@ -124,68 +81,51 @@ function afficherResultat(index) {
 
     const { min, max, moyenne } = moyenneMinMax(valeurs);
 
-    // Titre lié à une session prof
     document.getElementById('Result').textContent =
-        session.Link != null
-            ? `Résultats liés à la session ${session.Link}`
-            : 'Résultats de la session';
-
-    document.getElementById('Max').textContent   = max;
-    document.getElementById('Min').textContent   = min;
-    document.getElementById('Avg').textContent   = moyenne.toFixed(2);
-    document.getElementById('duree').textContent = session.duree ?? '—';
-    document.getElementById('time').textContent  = session.heur;
-    document.getElementById('date').textContent  = session.date;
-
+        session.Link != null ? `Résultats liés à la session ${session.Link}` : 'Résultats de la session';
+    document.getElementById('Max').textContent    = max;
+    document.getElementById('Min').textContent    = min;
+    document.getElementById('Avg').textContent    = moyenne.toFixed(2);
+    document.getElementById('duree').textContent  = session.duree ?? '—';
+    document.getElementById('time').textContent   = session.heur;
+    document.getElementById('date').textContent   = session.date;
     document.getElementById('chart-title').textContent =
         type === 'Subjectif' ? 'Graphe : Mesure Subjectif' : 'Graphe : Mesure Objectif';
 
-    document.getElementById('graphe-container').innerHTML =
-        buildSingleChart(valeurs, temps, type);
+    document.getElementById('graphe-container').innerHTML = buildSingleChart(valeurs, temps, type);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ÉTAT VIDE
-// ═══════════════════════════════════════════════════════════════
-
+// ── État vide ─────────────────────────────────────────────────
 function afficherEtatVide(message) {
     const container = document.getElementById('sessions-list');
-    if (container) {
+    if (container)
         container.innerHTML = `<p style="padding:16px;color:var(--text-muted);font-size:.85rem">${message}</p>`;
-    }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  PARAMÈTRES & AIDE
-// ═══════════════════════════════════════════════════════════════
-
-export function toggleParametres() {
+// ── Paramètres ────────────────────────────────────────────────
+function toggleParametres() {
     const panel       = document.getElementById('panel-params');
     const mainContent = document.getElementById('main-content');
     const btn         = document.getElementById('btn-params');
     const isOpen      = panel.style.display === 'flex';
 
-    if (isOpen) {
-        panel.style.display       = 'none';
-        mainContent.style.display = 'flex';
-        btn.textContent           = 'Paramètres';
-        btn.classList.remove('header-btn--active');
-    } else {
-        panel.style.display       = 'flex';
-        mainContent.style.display = 'none';
-        btn.textContent           = '← Retour';
-        btn.classList.add('header-btn--active');
+    panel.style.display       = isOpen ? 'none' : 'flex';
+    mainContent.style.display = isOpen ? 'flex' : 'none';
+    btn.textContent           = isOpen ? 'Paramètres' : '← Retour';
+    btn.classList.toggle('header-btn--active', !isOpen);
+
+    if (!isOpen) {
         setMsg('msg-compte', '', '');
         document.getElementById('confirm-compte')?.remove();
     }
 }
 
-export function toggleAide() {
+function toggleAide() {
     const modal = document.getElementById('modal-aide');
     modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
 }
 
-export function closeModal(id) {
+function closeModal(id) {
     document.getElementById(id).style.display = 'none';
 }
 
@@ -197,8 +137,7 @@ function setMsg(id, text, type) {
 }
 
 // ── Suppression de compte ─────────────────────────────────────
-
-export function confirmerSuppressionCompte() {
+function confirmerSuppressionCompte() {
     if (document.getElementById('confirm-compte')) return;
     setMsg('msg-compte', '', '');
 
@@ -212,7 +151,6 @@ export function confirmerSuppressionCompte() {
             <button class="params-btn params-btn--cancel" id="btn-cancel-delete">Annuler</button>
         </div>`;
     document.getElementById('msg-compte').after(div);
-
     document.getElementById('btn-confirm-delete').addEventListener('click', supprimerCompte);
     document.getElementById('btn-cancel-delete').addEventListener('click', () => div.remove());
 }
@@ -225,28 +163,14 @@ async function supprimerCompte() {
     setMsg('msg-compte', 'Suppression en cours…', '');
 
     await db.from(TABLES.SESSION_ELEVE).delete().eq('idEleve', utilisateur.idEleve);
-
     const { error } = await db.from(TABLES.ELEVE).delete().eq('idEleve', utilisateur.idEleve);
+
     if (error) { setMsg('msg-compte', `Erreur : ${error.message}`, 'error'); return; }
 
     sessionStorage.clear();
     setMsg('msg-compte', 'Compte supprimé. Redirection…', 'success');
-    setTimeout(() => { window.location.href = '/index.html'; }, 2000);
+    setTimeout(() => { window.location.href = 'Connexion.html'; }, 2000);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  EXPOSITION GLOBALE (pour les onclick HTML inline)
-//  → À supprimer si on migre vers des addEventListener
-// ═══════════════════════════════════════════════════════════════
-
-window._changerSession          = changerSession;
-window.toggleParametres         = toggleParametres;
-window.toggleAide               = toggleAide;
-window.closeModal               = closeModal;
-window.confirmerSuppressionCompte = confirmerSuppressionCompte;
-
-// ═══════════════════════════════════════════════════════════════
-//  BOOT
-// ═══════════════════════════════════════════════════════════════
-
+// ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', PageEleve);

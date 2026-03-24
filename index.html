@@ -1,7 +1,326 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <meta http-equiv="refresh" content="0; url=public/landing.html">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosea Analyse — Plateforme de Mesure de la Charge Mentale</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="public/index.css">
 </head>
-<body></body>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════ -->
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="nav-brand">
+            <span class="brand-dot"></span>
+            <span class="brand-name">Mosea Analyse</span>
+        </div>
+        <div class="nav-links">
+            <a href="#fonctionnement" class="nav-link">Fonctionnement</a>
+            <a href="#domaines" class="nav-link">Domaines</a>
+            <a href="#apropos" class="nav-link">À propos</a>
+            <a href="public/Connexion.html" class="nav-cta">Se connecter →</a>
+        </div>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+            <span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     HERO
+══════════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-bg">
+        <div class="hero-orb hero-orb--1"></div>
+        <div class="hero-orb hero-orb--2"></div>
+        <div class="hero-grid"></div>
+    </div>
+
+    <div class="hero-inner">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Mesure en temps réel · Éducation &amp; Aviation
+        </div>
+
+        <h1 class="hero-title">
+            Visualisez la<br>
+            <em>charge mentale</em><br>
+            de vos équipes
+        </h1>
+
+        <p class="hero-desc">
+            Mosea Analyse centralise et restitue les données de charge mentale
+            collectées par l'application mobile — en mode subjectif ou objectif —
+            pour les professeurs et pilotes qui accompagnent leurs équipes.
+        </p>
+
+        <div class="hero-actions">
+            <a href="public/Connexion.html" class="btn btn--primary">Accéder à la plateforme</a>
+            <a href="#fonctionnement" class="btn btn--ghost">Voir comment ça marche</a>
+        </div>
+
+        <!-- Métriques rapides -->
+        <div class="hero-metrics">
+            <div class="metric">
+                <span class="metric-val">2</span>
+                <span class="metric-lbl">Modes de mesure</span>
+            </div>
+            <div class="metric-sep"></div>
+            <div class="metric">
+                <span class="metric-val">2</span>
+                <span class="metric-lbl">Domaines d'usage</span>
+            </div>
+            <div class="metric-sep"></div>
+            <div class="metric">
+                <span class="metric-val">∞</span>
+                <span class="metric-lbl">Sessions archivées</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mockup flottant -->
+    <div class="hero-visual">
+        <div class="mockup-window">
+            <div class="mockup-bar">
+                <span class="mockup-dot r"></span>
+                <span class="mockup-dot y"></span>
+                <span class="mockup-dot g"></span>
+                <span class="mockup-url">mosea-analyse · session #42</span>
+            </div>
+            <div class="mockup-body">
+
+                <!-- Mini stats -->
+                <div class="mockup-stats">
+                    <div class="mockup-stat">
+                        <span class="ms-lbl">Max</span>
+                        <span class="ms-val">4.8</span>
+                    </div>
+                    <div class="mockup-stat">
+                        <span class="ms-lbl">Min</span>
+                        <span class="ms-val">1.2</span>
+                    </div>
+                    <div class="mockup-stat">
+                        <span class="ms-lbl">Moy</span>
+                        <span class="ms-val">3.14</span>
+                    </div>
+                    <div class="mockup-stat">
+                        <span class="ms-lbl">Durée</span>
+                        <span class="ms-val">24m</span>
+                    </div>
+                </div>
+
+                <!-- Mini chart SVG -->
+                <div class="mockup-chart-wrap">
+                    <svg viewBox="0 0 200 80" preserveAspectRatio="none" class="mockup-chart">
+                        <line x1="0" y1="20" x2="200" y2="20" stroke="#e0e4ef" stroke-width="0.8"/>
+                        <line x1="0" y1="40" x2="200" y2="40" stroke="#e0e4ef" stroke-width="0.8"/>
+                        <line x1="0" y1="60" x2="200" y2="60" stroke="#e0e4ef" stroke-width="0.8"/>
+                        <defs>
+                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#4f6ef7" stop-opacity="0.18"/>
+                                <stop offset="100%" stop-color="#4f6ef7" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <polygon fill="url(#areaGrad)"
+                            points="10,70 30,55 55,38 70,44 90,22 115,30 135,18 155,26 175,14 190,20 190,78 10,78"/>
+                        <polyline fill="none" stroke="#4f6ef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                            points="10,70 30,55 55,38 70,44 90,22 115,30 135,18 155,26 175,14 190,20"/>
+                        <circle cx="135" cy="18" r="3.5" fill="#4f6ef7"/>
+                        <circle cx="175" cy="14" r="3.5" fill="#4f6ef7"/>
+                    </svg>
+                    <div class="mockup-chart-label">Mesure Subjectif · Session #42</div>
+                </div>
+
+                <!-- Mini students list -->
+                <div class="mockup-students">
+                    <div class="mockup-student active">
+                        <span class="ms-avatar">MA</span>
+                        <span class="ms-name">Martin A.</span>
+                        <span class="ms-score high">4.8</span>
+                    </div>
+                    <div class="mockup-student">
+                        <span class="ms-avatar">LB</span>
+                        <span class="ms-name">Leroy B.</span>
+                        <span class="ms-score mid">2.3</span>
+                    </div>
+                    <div class="mockup-student">
+                        <span class="ms-avatar">SC</span>
+                        <span class="ms-name">Simon C.</span>
+                        <span class="ms-score low">1.2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FONCTIONNEMENT
+══════════════════════════════════════ -->
+<section class="section" id="fonctionnement">
+    <div class="section-inner">
+        <div class="section-label">Comment ça marche</div>
+        <h2 class="section-title">Un flux simple, de la mesure à l'analyse</h2>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-icon">📱</div>
+                <h3>Collecte mobile</h3>
+                <p>Les élèves ou membres d'équipage renseignent leur charge mentale depuis l'application mobile Mosea, en mode subjectif (0–5) ou objectif (0–220).</p>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-icon">☁️</div>
+                <h3>Synchronisation</h3>
+                <p>Les données sont envoyées en temps réel dans la base de données cloud et associées à la session en cours, identifiée par date et heure.</p>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-icon">📊</div>
+                <h3>Visualisation</h3>
+                <p>Le professeur ou instructeur accède à Mosea Analyse pour consulter les courbes, statistiques et comparer les profils de charge par session.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     DOMAINES
+══════════════════════════════════════ -->
+<section class="section section--alt" id="domaines">
+    <div class="section-inner">
+        <div class="section-label">Champs d'application</div>
+        <h2 class="section-title">Deux domaines, une seule plateforme</h2>
+
+        <div class="domains">
+            <div class="domain-card domain-card--education">
+                <div class="domain-tag">Éducation</div>
+                <div class="domain-icon">🎓</div>
+                <h3>Salle de classe</h3>
+                <p>Permettez aux enseignants de suivre l'état cognitif de leurs élèves session après session. Identifiez les surcharges, adaptez le rythme pédagogique, et archivez l'historique pour chaque apprenant.</p>
+                <ul class="domain-list">
+                    <li>Suivi individuel par élève</li>
+                    <li>Comparaison inter-sessions</li>
+                    <li>Mesure subjectif &amp; objectif</li>
+                </ul>
+            </div>
+
+            <div class="domain-card domain-card--aviation">
+                <div class="domain-tag">Aviation</div>
+                <div class="domain-icon">✈️</div>
+                <h3>Cockpit &amp; Formation</h3>
+                <p>Suivez la charge cognitive des équipages pendant les simulations de vol ou les vols d'entraînement. Détectez les pics de stress et adaptez le scénario en conséquence pour une formation plus sûre.</p>
+                <ul class="domain-list">
+                    <li>Monitoring en simulation</li>
+                    <li>Historique de vol archivé</li>
+                    <li>Données objectives (BPM, etc.)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     MESURES
+══════════════════════════════════════ -->
+<section class="section" id="mesures">
+    <div class="section-inner">
+        <div class="section-label">Types de mesures</div>
+        <h2 class="section-title">Subjectif ou objectif, selon votre protocole</h2>
+
+        <div class="measures">
+            <div class="measure-card">
+                <div class="measure-scale">
+                    <span class="scale-bar" style="width:20%"></span>
+                    <span class="scale-bar" style="width:45%"></span>
+                    <span class="scale-bar" style="width:80%"></span>
+                    <span class="scale-bar" style="width:60%"></span>
+                    <span class="scale-bar" style="width:95%"></span>
+                </div>
+                <div class="measure-range">0 — 5</div>
+                <h3>Mesure Subjective</h3>
+                <p>Auto-évaluation de la charge ressentie sur une échelle de 0 à 5. Simple, rapide, efficace pour un retour à chaud en cours de session.</p>
+            </div>
+
+            <div class="measure-card">
+                <div class="measure-scale">
+                    <span class="scale-bar scale-bar--obj" style="width:15%"></span>
+                    <span class="scale-bar scale-bar--obj" style="width:40%"></span>
+                    <span class="scale-bar scale-bar--obj" style="width:75%"></span>
+                    <span class="scale-bar scale-bar--obj" style="width:55%"></span>
+                    <span class="scale-bar scale-bar--obj" style="width:90%"></span>
+                </div>
+                <div class="measure-range">0 — 220</div>
+                <h3>Mesure Objective</h3>
+                <p>Données physiologiques ou instrumentées (fréquence cardiaque, etc.) sur une échelle 0–220. Idéale pour les protocoles de recherche rigoureux.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     ROLES
+══════════════════════════════════════ -->
+<section class="section section--alt">
+    <div class="section-inner">
+        <div class="section-label">Accès par rôle</div>
+        <h2 class="section-title">Une vue adaptée à chaque utilisateur</h2>
+
+        <div class="roles">
+            <div class="role-card">
+                <div class="role-icon">👨‍🏫</div>
+                <h3>Professeur / Instructeur</h3>
+                <p>Vue agrégée de tous les élèves, comparaison des courbes, statistiques globales et gestion des sessions. Accès complet à l'historique de sa classe.</p>
+                <div class="role-badge">Vue globale</div>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">👨‍🎓</div>
+                <h3>Élève / Équipier</h3>
+                <p>Accès à ses propres sessions uniquement : courbes personnelles, stats individuelles et historique complet de ses mesures sur la durée.</p>
+                <div class="role-badge">Vue personnelle</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     CTA FINAL
+══════════════════════════════════════ -->
+<section class="cta-section">
+    <div class="cta-inner">
+        <div class="cta-badge">Plateforme web · Accès sécurisé</div>
+        <h2 class="cta-title">Prêt à analyser vos données ?</h2>
+        <p class="cta-desc">Connectez-vous avec votre compte Mosea pour accéder à vos sessions et visualiser vos mesures.</p>
+        <a href="public/Connexion.html" class="btn btn--primary btn--lg">Accéder à Mosea Analyse →</a>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FOOTER
+══════════════════════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <span class="brand-dot"></span>
+            <span class="brand-name">Mosea Analyse</span>
+        </div>
+        <p class="footer-copy">Plateforme d'analyse de la charge mentale · Éducation &amp; Aviation</p>
+        <div class="footer-links">
+            <a href="public/Connexion.html">Connexion</a>
+        </div>
+    </div>
+</footer>
+
+<script> src="src/index.js" </script>
+
+</body>
 </html>

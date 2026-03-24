@@ -1,29 +1,13 @@
-// ═══════════════════════════════════════════════════════════════
-//  src/login.js
-//  Gère le formulaire de connexion de connexion.html.
-//  Importe connecter() depuis auth.js pour ne pas dupliquer
-//  la logique Supabase.
-// ═══════════════════════════════════════════════════════════════
+const form  = document.getElementById('loginForm');
+const msgEl = document.getElementById('msg-erreur');
+const btnEl = document.getElementById('connexionButton');
 
-import { connecter } from './auth.js';
-
-// ── Éléments du DOM ───────────────────────────────────────────
-const form    = document.getElementById('loginForm');
-const msgEl   = document.getElementById('msg-erreur');
-const btnEl   = document.getElementById('connexionButton');
-
-// ── Helpers UI ────────────────────────────────────────────────
-
-function setErreur(message) {
-    msgEl.textContent = message;
-}
+function setErreur(msg) { msgEl.textContent = msg; }
 
 function setChargement(actif) {
-    btnEl.disabled     = actif;
-    btnEl.textContent  = actif ? 'Connexion en cours…' : 'Se connecter';
+    btnEl.disabled    = actif;
+    btnEl.textContent = actif ? 'Connexion en cours…' : 'Se connecter';
 }
-
-// ── Soumission du formulaire ──────────────────────────────────
 
 async function handleConnexion(event) {
     event.preventDefault();
@@ -35,31 +19,20 @@ async function handleConnexion(event) {
     const mode   = document.getElementById('Mode').value;
     const mdp    = document.getElementById('mdp').value;
 
-    // Validation basique côté client
     if (!nom || !prenom || !mdp) {
         setErreur('Veuillez remplir tous les champs.');
         return;
     }
 
     setChargement(true);
-
     const { utilisateur, erreur } = await connecter({ nom, prenom, mode, mdp, role });
-
     setChargement(false);
 
-    if (erreur) {
-        setErreur(erreur);
-        return;
-    }
+    if (erreur) { setErreur(erreur); return; }
 
-    // Redirection selon le rôle
-    if (role === 'professeur') {
-        window.location.href = 'indexProfesseur.html';
-    } else {
-        window.location.href = 'indexEleve.html';
-    }
+    window.location.href = role === 'professeur'
+        ? 'AnalyseProfesseur.html'
+        : 'AnalyseEleve.html';
 }
-
-// ── Boot ──────────────────────────────────────────────────────
 
 form.addEventListener('submit', handleConnexion);
