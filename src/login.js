@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════════
+//  src/login.js
+//  Gère le formulaire de connexion de public/Connexion.html.
+//  Doit être chargé après auth.js.
+// ═══════════════════════════════════════════════════════════════
+
 const form  = document.getElementById('loginForm');
 const msgEl = document.getElementById('msg-erreur');
 const btnEl = document.getElementById('connexionButton');

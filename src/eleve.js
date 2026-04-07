@@ -1,10 +1,19 @@
+// ═══════════════════════════════════════════════════════════════
+//  src/eleve.js
+//  Logique du tableau de bord élève (public/AnalyseEleve.html).
+//  Charge les sessions de l'élève connecté depuis SessionEleve,
+//  les trie par date/heure décroissantes, et affiche graphe et
+//  statistiques pour la session sélectionnée.
+// ═══════════════════════════════════════════════════════════════
+
 let donneesSession = null;
 
 // ── Init ──────────────────────────────────────────────────────
 async function PageEleve() {
     const utilisateur = requireAuth('élève');
 
-    document.getElementById('userInfo').textContent = String(utilisateur.nom) + ' ' + String(utilisateur.prenom);
+    document.getElementById('userInfo').textContent =
+        nomComplet(utilisateur.nom, utilisateur.prenom);
     document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
 
     donneesSession = await recupererSessions(utilisateur.idEleve);
@@ -23,11 +32,16 @@ async function PageEleve() {
 }
 
 // ── Supabase ──────────────────────────────────────────────────
+/**
+ * Récupère toutes les sessions de l'élève connecté.
+ * @param {number} idEleve
+ * @returns {Promise<object[]|null>}
+ */
 async function recupererSessions(idEleve) {
     const { data, error } = await db
         .from(TABLES.SESSION_ELEVE)
         .select('*')
-        .eq('idEleve', idEleve);
+        .eq(COLS.SESSION_ELEVE.ID_ELEVE, idEleve);
 
     if (error) {
         console.error('Erreur récupération sessions :', error);
@@ -44,7 +58,7 @@ function afficherListeSessions(sessions) {
     container.innerHTML = sessions.map((s, i) => `
         <div class="session-card" onclick="changerSession(${i})">
             <p><strong>Session du ${s.date} à ${s.heur}</strong></p>
-            <p>Type de mesure : ${s.TypeMesure}</p>
+            <p>Type de mesure : ${s.typemesure}</p>
         </div>
     `).join('');
 }
@@ -69,9 +83,9 @@ function resetStatsUI() {
 // ── Affichage résultat ────────────────────────────────────────
 function afficherResultat(index) {
     const session = donneesSession[index];
-    const valeurs = session.DataMesure?.valeurs;
-    const temps   = session.DataMesure?.temps;
-    const type    = session.TypeMesure;
+    const valeurs = session.datamesure?.valeurs;
+    const temps   = session.datamesure?.temps;
+    const type    = session.typemesure;
 
     if (!valeurs || !temps || valeurs.length === 0) {
         document.getElementById('graphe-container').innerHTML =
@@ -82,7 +96,9 @@ function afficherResultat(index) {
     const { min, max, moyenne } = moyenneMinMax(valeurs);
 
     document.getElementById('Result').textContent =
-        session.Link != null ? `Résultats liés à la session ${session.Link}` : 'Résultats de la session';
+        session.link != null
+            ? `Résultats liés à la session ${session.link}`
+            : 'Résultats de la session';
     document.getElementById('Max').textContent    = max;
     document.getElementById('Min').textContent    = min;
     document.getElementById('Avg').textContent    = moyenne.toFixed(2);
@@ -92,7 +108,8 @@ function afficherResultat(index) {
     document.getElementById('chart-title').textContent =
         type === 'Subjectif' ? 'Graphe : Mesure Subjectif' : 'Graphe : Mesure Objectif';
 
-    document.getElementById('graphe-container').innerHTML = buildSingleChart(valeurs, temps, type);
+    document.getElementById('graphe-container').innerHTML =
+        buildSingleChart(valeurs, temps, type);
 }
 
 // ── État vide ─────────────────────────────────────────────────
@@ -157,15 +174,35 @@ function confirmerSuppressionCompte() {
 
 async function supprimerCompte() {
     const utilisateur = getUtilisateur();
-    if (!utilisateur) { setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error'); return; }
+    if (!utilisateur) {
+        setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error');
+        return;
+    }
 
     document.getElementById('confirm-compte')?.remove();
     setMsg('msg-compte', 'Suppression en cours…', '');
 
-    await db.from(TABLES.SESSION_ELEVE).delete().eq('idEleve', utilisateur.idEleve);
-    const { error } = await db.from(TABLES.ELEVE).delete().eq('idEleve', utilisateur.idEleve);
+    // 1. Suppression en cascade des sessions élève
+    const { error: errSessions } = await db
+        .from(TABLES.SESSION_ELEVE)
+        .delete()
+        .eq(COLS.SESSION_ELEVE.ID_ELEVE, utilisateur.idEleve);
 
-    if (error) { setMsg('msg-compte', `Erreur : ${error.message}`, 'error'); return; }
+    if (errSessions) {
+        setMsg('msg-compte', `Erreur : ${errSessions.message}`, 'error');
+        return;
+    }
+
+    // 2. Suppression du compte élève
+    const { error: errCompte } = await db
+        .from(TABLES.ELEVE)
+        .delete()
+        .eq(COLS.ELEVE.ID, utilisateur.idEleve);
+
+    if (errCompte) {
+        setMsg('msg-compte', `Erreur : ${errCompte.message}`, 'error');
+        return;
+    }
 
     sessionStorage.clear();
     setMsg('msg-compte', 'Compte supprimé. Redirection…', 'success');
