@@ -1,11 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  src/config.js
-//  Configuration centrale de l'application web Mosea Analyse.
-//  Tous les noms de tables et de colonnes sont alignés avec le
-//  schéma Supabase réel (colonnes en minuscules sauf "Date"/"Heure"
-//  dans la table SessionProfesseur).
-// ═══════════════════════════════════════════════════════════════
-
 // ── Supabase ──────────────────────────────────────────────────
 const SUPABASE_URL      = 'https://wzjsjmttovuhqsaosgzt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_XB90iEJcRd2fGrjEkCgfoA_BnRV-Xnh';
@@ -18,41 +10,44 @@ const TABLES = {
     SESSION_PROFESSEUR: 'SessionProfesseur',
 };
 
-// ── Noms des colonnes (alignés avec le schéma Supabase) ───────
-//  Centralisés ici pour éviter toute divergence dans les requêtes.
+// ── Noms EXACTS des colonnes (casing critique Supabase) ───────
+// Règle : la plupart sont en minuscules, SAUF :
+//   - SessionEleve.idEleve     (camelCase)
+//   - SessionProfesseur.Date   (majuscule initiale)
+//   - SessionProfesseur.Heure  (majuscule initiale)
 const COLS = {
     ELEVE: {
-        ID:     'ideleve',
-        NOM:    'nom',
-        PRENOM: 'prenom',
-        MODE:   'mode',
-        MDP:    'mdp',
+        id:     'ideleve',
+        nom:    'nom',
+        prenom: 'prenom',
+        mode:   'mode',
+        mdp:    'mdp',
     },
     PROFESSEUR: {
-        ID:     'idprofesseur',
-        NOM:    'nom',
-        PRENOM: 'prenom',
-        MODE:   'mode',
-        MDP:    'mdp',
+        id:     'idprofesseur',
+        nom:    'nom',
+        prenom: 'prenom',
+        mode:   'mode',
+        mdp:    'mdp',
     },
     SESSION_ELEVE: {
-        ID:          'id',
-        ID_ELEVE:    'idEleve',
-        LINK:        'link',
-        TYPE_MESURE: 'typemesure',
-        DATA_MESURE: 'datamesure',
-        DUREE:       'duree',
-        HEUR:        'heur',
-        DATE:        'date',
+        id:         'id',
+        idEleve:    'idEleve',        // camelCase !
+        link:       'link',
+        typeMesure: 'typemesure',
+        dataMesure: 'datamesure',
+        duree:      'duree',
+        heur:       'heur',
+        date:       'date',
     },
     SESSION_PROFESSEUR: {
-        ID:            'id',
-        ID_PROFESSEUR: 'idprofesseur',
-        LINK_SESSION:  'linksession',
-        LISTE_ELEVE:   'listeeleve',
-        DATE:          'Date',
-        HEURE:         'Heure',
-        SUJET:         'sujet',
+        id:           'id',
+        idProfesseur: 'idprofesseur',
+        linkSession:  'linksession',
+        listeEleve:   'listeeleve',
+        date:         'Date',         // majuscule !
+        heure:        'Heure',        // majuscule !
+        sujet:        'sujet',
     },
 };
 
@@ -62,7 +57,7 @@ const AXES = {
     Objectif:  { valMax: 220, yTicks: [220, 180, 140, 100, 60, 0] },
 };
 
-// ── Couleurs vue « Tous les élèves » ──────────────────────────
+// ── Couleurs vue "Tous les élèves" ────────────────────────────
 const COLORS_ALL = [
     'var(--accent)',
     '#e67e22',

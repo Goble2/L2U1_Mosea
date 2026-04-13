@@ -1,12 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  src/professeur.js
-//  Logique du tableau de bord professeur
-//  (public/AnalyseProfesseur.html).
-//  Charge les sessions du professeur connecté depuis
-//  SessionProfesseur, puis pour chaque session sélectionnée
-//  charge les sessions élève associées via la colonne `link`.
-// ═══════════════════════════════════════════════════════════════
-
 let sessions   = null;
 let listeEleve = null;
 
@@ -14,11 +5,10 @@ let listeEleve = null;
 async function PageProfesseur() {
     const utilisateur = requireAuth('professeur');
 
-    document.getElementById('userInfo').textContent =
-        nomComplet(utilisateur.nom, utilisateur.prenom);
+    document.getElementById('userInfo').textContent = nomComplet(utilisateur.nom, utilisateur.prenom);
     document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
 
-    sessions = await recupererSessionsProfesseur(utilisateur.idProfesseur);
+    sessions = await recupererSessionsProfesseur(utilisateur[COLS.PROFESSEUR.id]);
 
     if (!sessions || sessions.length === 0) {
         afficherEtatVide('Aucune session disponible.');
@@ -28,44 +18,24 @@ async function PageProfesseur() {
 }
 
 // ── Supabase ──────────────────────────────────────────────────
-/**
- * Récupère toutes les sessions créées par le professeur connecté.
- * @param {number} idProfesseur
- * @returns {Promise<object[]|null>}
- */
-async function recupererSessionsProfesseur(idProfesseur) {
+async function recupererSessionsProfesseur(idprofesseur) {
     const { data, error } = await db
         .from(TABLES.SESSION_PROFESSEUR)
         .select('*')
-        .eq(COLS.SESSION_PROFESSEUR.ID_PROFESSEUR, idProfesseur);
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
 
-    if (error) {
-        console.error('Erreur sessions prof :', error);
-        return null;
-    }
+    if (error) { console.error('Erreur sessions prof :', error); return null; }
     return data;
 }
 
-/**
- * Récupère les sessions élève associées à une session professeur,
- * filtrées par la liste des élèves de la session.
- * Effectue une jointure avec la table eleve pour récupérer
- * les noms et prénoms.
- * @param {number[]} listeId    - Identifiants des élèves
- * @param {number}   linkSession - LinkSession de la session prof
- * @returns {Promise<object[]|null>}
- */
 async function recupererSessionsEleve(listeId, linkSession) {
     const { data, error } = await db
         .from(TABLES.SESSION_ELEVE)
-        .select('*, eleve(nom, prenom)')
-        .eq(COLS.SESSION_ELEVE.LINK, linkSession)
-        .in(COLS.SESSION_ELEVE.ID_ELEVE, listeId);
+        .select(`*, ${TABLES.ELEVE}(nom, prenom)`)
+        .eq(COLS.SESSION_ELEVE.link, linkSession)
+        .in(COLS.SESSION_ELEVE.idEleve, listeId);
 
-    if (error) {
-        console.error('Erreur sessions élève :', error);
-        return null;
-    }
+    if (error) { console.error('Erreur sessions élève :', error); return null; }
     return data;
 }
 
@@ -121,10 +91,10 @@ async function afficherElevesPresents(listeEleveNum, linkSession) {
             <p>Vue agrégée par type de mesure</p>
         </div>`;
 
-    const cartesEleves = listeEleve.map((eleve, i) => `
+    const cartesEleves = listeEleve.map((item, i) => `
         <div class="session-eleve" onclick="afficherResultatEleve(${i})">
-            <p><strong>${eleve.eleve?.nom ?? ''} ${eleve.eleve?.prenom ?? ''}</strong></p>
-            <p>Type : ${eleve.typemesure}</p>
+            <p><strong>${item.eleve.nom} ${item.eleve.prenom}</strong></p>
+            <p>Type : ${item.typemesure}</p>
         </div>`).join('');
 
     container.innerHTML = carteAll + cartesEleves;
@@ -136,7 +106,7 @@ function afficherResultatEleve(index) {
     const session = listeEleve[index];
     const valeurs = session.datamesure?.valeurs;
     const temps   = session.datamesure?.temps;
-    if (!valeurs || !temps || valeurs.length === 0) return;
+    if (!valeurs || !temps) return;
 
     const { min, max, moyenne } = moyenneMinMax(valeurs);
 
@@ -146,10 +116,7 @@ function afficherResultatEleve(index) {
     document.getElementById('Mesure').textContent = session.duree ?? '—';
     document.getElementById('time').textContent   = session.heur;
     document.getElementById('date').textContent   = session.date;
-    document.getElementById('chart-title').textContent =
-        session.typemesure === 'Subjectif'
-            ? 'Graphe : Mesure Subjectif'
-            : 'Graphe : Mesure Objectif';
+    document.getElementById('chart-title').textContent = 'Graphe';
 
     document.getElementById('graphe-container').innerHTML =
         buildSingleChart(valeurs, temps, session.typemesure);
@@ -167,29 +134,29 @@ function afficherResultatAll() {
 
     // Regrouper par type de mesure
     const groupes = {};
-    listeEleve.forEach(eleve => {
-        const type = eleve.typemesure || 'Inconnu';
+    listeEleve.forEach(item => {
+        const type = item.typemesure || 'Inconnu';
         if (!groupes[type]) groupes[type] = [];
-        groupes[type].push(eleve);
+        groupes[type].push(item);
     });
 
-    const html = Object.entries(groupes).map(([type, eleves], idx) => {
+    const html = Object.entries(groupes).map(([type, items], idx) => {
         const couleur    = COLORS_ALL[idx % COLORS_ALL.length];
         const { valMax } = getAxe(type);
 
-        const vGroupe = eleves.flatMap(e => e.datamesure?.valeurs || []);
+        const vGroupe = items.flatMap(e => e.datamesure?.valeurs || []);
         const stats   = vGroupe.length > 0 ? moyenneMinMax(vGroupe) : null;
 
-        const tempsMax = Math.max(...eleves.map(e => {
+        const tempsMax = Math.max(...items.map(e => {
             const t = e.datamesure?.temps;
-            return t && t.length ? t[t.length - 1] : 0;
+            return t ? t[t.length - 1] : 0;
         }));
 
-        const polylines = eleves.map((eleve, i) => {
-            const v = eleve.datamesure?.valeurs;
-            const t = eleve.datamesure?.temps;
-            if (!v || !t || v.length === 0) return '';
-            const opacity = (0.35 + (0.65 / eleves.length) * (i + 1)).toFixed(2);
+        const polylines = items.map((item, i) => {
+            const v = item.datamesure?.valeurs;
+            const t = item.datamesure?.temps;
+            if (!v || !t) return '';
+            const opacity = (0.35 + (0.65 / items.length) * (i + 1)).toFixed(2);
             const pts = genererPoints(v, t, valMax, tempsMax);
             return `<polyline fill="none" stroke="${couleur}" stroke-width="0.4" opacity="${opacity}" points="${pts}"/>`;
         }).join('');
@@ -198,7 +165,7 @@ function afficherResultatAll() {
             <span class="all-stat"><span class="all-stat-label">Min</span>    <span class="all-stat-value">${stats.min}</span></span>
             <span class="all-stat"><span class="all-stat-label">Max</span>    <span class="all-stat-value">${stats.max}</span></span>
             <span class="all-stat"><span class="all-stat-label">Moy</span>    <span class="all-stat-value">${stats.moyenne.toFixed(2)}</span></span>
-            <span class="all-stat"><span class="all-stat-label">Élèves</span> <span class="all-stat-value">${eleves.length}</span></span>`
+            <span class="all-stat"><span class="all-stat-label">Élèves</span> <span class="all-stat-value">${items.length}</span></span>`
             : '<span class="all-stat-label">Aucune donnée</span>';
 
         return `
@@ -235,7 +202,7 @@ function toggleParametres() {
 
     if (!isOpen) {
         setMsg('msg-session', '', '');
-        setMsg('msg-compte',  '', '');
+        setMsg('msg-compte', '', '');
         document.getElementById('confirm-compte')?.remove();
     }
 }
@@ -259,28 +226,26 @@ function setMsg(id, text, type) {
 // ── Supprimer une session ─────────────────────────────────────
 async function supprimerSession() {
     const id = parseInt(document.getElementById('input-session-id').value, 10);
-    if (!id || id <= 0) {
-        setMsg('msg-session', 'Identifiant invalide.', 'error');
-        return;
-    }
+    if (!id || id <= 0) { setMsg('msg-session', 'Identifiant invalide.', 'error'); return; }
     setMsg('msg-session', 'Suppression en cours…', '');
 
-    const { error } = await db
-        .from(TABLES.SESSION_PROFESSEUR)
+    // Cascade : SessionEleve.link === linksession
+    await db.from(TABLES.SESSION_ELEVE)
         .delete()
-        .eq(COLS.SESSION_PROFESSEUR.LINK_SESSION, id);
+        .eq(COLS.SESSION_ELEVE.link, id);
 
-    if (error) {
-        setMsg('msg-session', `Erreur : ${error.message}`, 'error');
-        return;
-    }
+    const { error } = await db.from(TABLES.SESSION_PROFESSEUR)
+        .delete()
+        .eq(COLS.SESSION_PROFESSEUR.linkSession, id);
+
+    if (error) { setMsg('msg-session', `Erreur : ${error.message}`, 'error'); return; }
 
     setMsg('msg-session', `Session ${id} supprimée.`, 'success');
     document.getElementById('input-session-id').value = '';
 
     const utilisateur = getUtilisateur();
     if (utilisateur) {
-        sessions = await recupererSessionsProfesseur(utilisateur.idProfesseur);
+        sessions = await recupererSessionsProfesseur(utilisateur[COLS.PROFESSEUR.id]);
         afficherListeSessions(sessions || []);
     }
 }
@@ -306,39 +271,45 @@ function confirmerSuppressionCompte() {
 
 async function supprimerCompteProfesseur() {
     const utilisateur = getUtilisateur();
-    if (!utilisateur) {
-        setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error');
-        return;
-    }
+    if (!utilisateur) { setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error'); return; }
+
+    const idprofesseur = utilisateur[COLS.PROFESSEUR.id];
 
     document.getElementById('confirm-compte')?.remove();
     setMsg('msg-compte', 'Suppression en cours…', '');
 
-    // 1. Suppression en cascade des sessions du professeur
-    const { error: errSessions } = await db
+    // 1) Récupérer les linksession du prof pour cascade sur SessionEleve
+    const { data: sessionsProf } = await db
         .from(TABLES.SESSION_PROFESSEUR)
-        .delete()
-        .eq(COLS.SESSION_PROFESSEUR.ID_PROFESSEUR, utilisateur.idProfesseur);
+        .select(COLS.SESSION_PROFESSEUR.linkSession)
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
 
-    if (errSessions) {
-        setMsg('msg-compte', `Erreur : ${errSessions.message}`, 'error');
-        return;
+    if (sessionsProf && sessionsProf.length > 0) {
+        const links = sessionsProf.map(s => s[COLS.SESSION_PROFESSEUR.linkSession]);
+        await db.from(TABLES.SESSION_ELEVE)
+            .delete()
+            .in(COLS.SESSION_ELEVE.link, links);
     }
 
-    // 2. Suppression du compte professeur
-    const { error: errCompte } = await db
-        .from(TABLES.PROFESSEUR)
+    // 2) Supprimer les SessionProfesseur
+    await db.from(TABLES.SESSION_PROFESSEUR)
         .delete()
-        .eq(COLS.PROFESSEUR.ID, utilisateur.idProfesseur);
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
 
-    if (errCompte) {
-        setMsg('msg-compte', `Erreur : ${errCompte.message}`, 'error');
-        return;
-    }
+    // 3) Supprimer le professeur
+    const { error } = await db.from(TABLES.PROFESSEUR)
+        .delete()
+        .eq(COLS.PROFESSEUR.id, idprofesseur);
+
+    if (error) { setMsg('msg-compte', `Erreur : ${error.message}`, 'error'); return; }
 
     sessionStorage.clear();
     setMsg('msg-compte', 'Compte supprimé. Redirection…', 'success');
     setTimeout(() => { window.location.href = 'Connexion.html'; }, 2000);
+}
+
+function goToHistorique() {
+    window.location.href = 'Historique.html';
 }
 
 // ── Boot ──────────────────────────────────────────────────────

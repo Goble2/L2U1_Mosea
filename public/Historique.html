@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosea — Historique des sessions</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:             #f0f2f7;
+            --surface:        #ffffff;
+            --border:         #e0e4ef;
+            --accent:         #4f6ef7;
+            --accent-dark:    #3a56d4;
+            --accent-soft:    #eef1fe;
+            --text-primary:   #1a1f36;
+            --text-secondary: #6b7280;
+            --text-muted:     #9ca3af;
+            --radius:         10px;
+            --radius-sm:      6px;
+            --font:           'DM Sans', sans-serif;
+            --font-mono:      'DM Mono', monospace;
+            --shadow-sm:      0 1px 3px rgba(0,0,0,.07);
+            --shadow-md:      0 4px 12px rgba(0,0,0,.08);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+        .app-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; height: 60px; background: var(--surface);
+            border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm);
+        }
+        .header-brand { display: flex; align-items: center; gap: 10px; }
+        .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+        .app-header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .header-btn {
+            font-family: var(--font); font-size: 0.875rem; font-weight: 500;
+            color: var(--text-secondary); background: transparent;
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 5px 14px; cursor: pointer;
+            transition: background .15s, color .15s; text-decoration: none;
+        }
+        .header-btn:hover { background: var(--accent-soft); color: var(--accent); }
+        .user-info {
+            font-size: 0.875rem; font-weight: 500; color: var(--accent);
+            background: var(--accent-soft); padding: 5px 14px; border-radius: 20px;
+        }
+
+        .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+        .filtres {
+            display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;
+        }
+        .filtre-input {
+            font-family: var(--font); font-size: 0.875rem; padding: 8px 14px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--surface); color: var(--text-primary); outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .filtre-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,110,247,.1); }
+        .filtre-input[type="text"] { width: 220px; }
+        .filtre-label {
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--text-muted);
+        }
+        .nb-sessions { margin-left: auto; font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+        .table-wrapper {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        thead { background: var(--bg); border-bottom: 1px solid var(--border); }
+        th {
+            padding: 12px 16px; text-align: left; font-size: 0.72rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+            cursor: pointer; user-select: none; white-space: nowrap;
+        }
+        th:hover { color: var(--accent); }
+        th .sort-icon { margin-left: 4px; opacity: 0.4; }
+        th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--accent-soft); cursor: pointer; }
+
+        .badge {
+            display: inline-block; font-size: 0.72rem; font-weight: 600;
+            padding: 3px 10px; border-radius: 20px; font-family: var(--font-mono);
+        }
+        .badge-eleves { background: var(--accent-soft); color: var(--accent-dark); }
+        .badge-code {
+            background: #f0faf4; color: #27ae60; border: 1px solid rgba(39,174,96,.2);
+        }
+
+        .stats-resume { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px 18px; box-shadow: var(--shadow-sm);
+        }
+        .stat-label {
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px;
+        }
+        .stat-value { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 500; color: var(--accent); }
+
+        .etat-vide { padding: 48px 24px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(26,31,54,.35); backdrop-filter: blur(3px);
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow-md); width: 560px; max-width: 95vw; max-height: 85vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .modal-header h2 {
+            font-size: 0.85rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--text-secondary);
+        }
+        .modal-close {
+            background: none; border: none; cursor: pointer; font-size: 0.9rem;
+            color: var(--text-muted); padding: 3px 7px; border-radius: var(--radius-sm);
+            font-family: var(--font); transition: background .15s;
+        }
+        .modal-close:hover { background: var(--bg); color: var(--text-primary); }
+        .modal-body { overflow-y: auto; padding: 20px; background: var(--bg); display: flex; flex-direction: column; gap: 12px; }
+
+        .eleve-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; }
+        .eleve-nom { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+        .eleve-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+        .eleve-stat { font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        .eleve-stat span { color: var(--accent); font-weight: 500; }
+
+        @media (max-width: 768px) {
+            .stats-resume { grid-template-columns: repeat(2, 1fr); }
+            th:nth-child(3), td:nth-child(3) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="header-brand">
+        <span class="brand-dot"></span>
+        <h1>Mosea — Historique des sessions</h1>
+    </div>
+    <div class="header-actions">
+        <a href="AnalyseProfesseur.html" class="header-btn">← Retour à l'analyse</a>
+        <button class="header-btn" id="btn-deconnexion">Se déconnecter</button>
+        <p id="userInfo" class="user-info">Chargement…</p>
+    </div>
+</header>
+
+<div id="modal-detail" class="modal-overlay" style="display:none" onclick="fermerModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 id="modal-titre">Détail de la session</h2>
+            <button class="modal-close" onclick="fermerModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<main class="page">
+
+    <div class="stats-resume">
+        <div class="stat-card">
+            <div class="stat-label">Sessions totales</div>
+            <div class="stat-value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Élèves distincts</div>
+            <div class="stat-value" id="stat-eleves">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Dernière session</div>
+            <div class="stat-value" id="stat-derniere" style="font-size:.95rem">—</div>
+        </div>
+    </div>
+
+    <div class="filtres">
+        <span class="filtre-label">Filtrer</span>
+        <input type="text" class="filtre-input" id="filtre-sujet"     placeholder="Sujet de session…" oninput="filtrerEtTrier()">
+        <input type="date" class="filtre-input" id="filtre-date-debut" oninput="filtrerEtTrier()">
+        <span class="filtre-label">→</span>
+        <input type="date" class="filtre-input" id="filtre-date-fin"   oninput="filtrerEtTrier()">
+        <span class="nb-sessions" id="nb-sessions">0 session</span>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th onclick="changerTri('sujet')">Sujet <span class="sort-icon">↕</span></th>
+                <th onclick="changerTri('Date')">Date <span class="sort-icon">↕</span></th>
+                <th onclick="changerTri('Heure')">Heure <span class="sort-icon">↕</span></th>
+                <th onclick="changerTri('nbEleves')">Élèves <span class="sort-icon">↕</span></th>
+                <th>Code session</th>
+            </tr>
+            </thead>
+            <tbody id="tbody-sessions">
+            <tr><td colspan="5" class="etat-vide">Chargement…</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- Ordre impératif : supabase CDN → config → supabase client → auth → utils → logique page -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../src/config.js"></script>
+<script src="../src/supabase.js"></script>
+<script src="../src/auth.js"></script>
+<script src="../src/utils/format.js"></script>
+<script>
+    /* ══════════════════════════════════════════
+       ÉTAT
+    ══════════════════════════════════════════ */
+    let toutesLesSessions = [];
+    let sessionsFiltrees  = [];
+    let triColonne        = COLS.SESSION_PROFESSEUR.date;   // 'Date'
+    let triSens           = 'desc';
+    let idprofesseurCourant = null;
+
+    /* ══════════════════════════════════════════
+       INIT
+    ══════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const utilisateur = requireAuth('professeur');
+
+        idprofesseurCourant = utilisateur[COLS.PROFESSEUR.id];
+        document.getElementById('userInfo').textContent =
+            nomComplet(utilisateur.nom, utilisateur.prenom);
+
+        document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
+
+        await chargerSessions();
+    });
+
+    /* ══════════════════════════════════════════
+       CHARGEMENT
+    ══════════════════════════════════════════ */
+    async function chargerSessions() {
+        // 1. Toutes les sessions du prof courant
+        const { data: sessions, error } = await db
+            .from(TABLES.SESSION_PROFESSEUR)
+            .select('*')
+            .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseurCourant)
+            .order(COLS.SESSION_PROFESSEUR.date, { ascending: false });
+
+        if (error) {
+            console.error('Erreur chargement sessions :', error);
+            document.getElementById('tbody-sessions').innerHTML =
+                '<tr><td colspan="5" class="etat-vide">Erreur de chargement.</td></tr>';
+            return;
+        }
+
+        if (!sessions || sessions.length === 0) {
+            document.getElementById('tbody-sessions').innerHTML =
+                '<tr><td colspan="5" class="etat-vide">Aucune session trouvée.</td></tr>';
+            mettreAJourStats([]);
+            return;
+        }
+
+        // 2. Compter les élèves par linksession via SessionEleve
+        const links = sessions
+            .map(s => s[COLS.SESSION_PROFESSEUR.linkSession])
+            .filter(Boolean);
+
+        const countMap = {};
+        if (links.length > 0) {
+            const { data: seData } = await db
+                .from(TABLES.SESSION_ELEVE)
+                .select(`${COLS.SESSION_ELEVE.link}, ${COLS.SESSION_ELEVE.idEleve}`)
+                .in(COLS.SESSION_ELEVE.link, links);
+
+            (seData || []).forEach(se => {
+                const k = se[COLS.SESSION_ELEVE.link];
+                countMap[k] = (countMap[k] || 0) + 1;
+            });
+        }
+
+        // 3. Enrichir
+        toutesLesSessions = sessions.map(s => ({
+            ...s,
+            nbEleves: countMap[s[COLS.SESSION_PROFESSEUR.linkSession]] || 0,
+        }));
+
+        mettreAJourStats(toutesLesSessions);
+        filtrerEtTrier();
+    }
+
+    /* ══════════════════════════════════════════
+       STATS RÉSUMÉ
+    ══════════════════════════════════════════ */
+    function mettreAJourStats(liste) {
+        document.getElementById('stat-total').textContent = liste.length;
+
+        const elevesDistincts = new Set();
+        liste.forEach(s => {
+            (s[COLS.SESSION_PROFESSEUR.listeEleve] || []).forEach(id => elevesDistincts.add(id));
+        });
+        document.getElementById('stat-eleves').textContent = elevesDistincts.size;
+
+        const derniere = liste[0];
+        document.getElementById('stat-derniere').textContent =
+            derniere ? formaterDate(derniere[COLS.SESSION_PROFESSEUR.date]) : '—';
+    }
+
+    /* ══════════════════════════════════════════
+       FILTRES ET TRI
+    ══════════════════════════════════════════ */
+    function filtrerEtTrier() {
+        const sujet     = document.getElementById('filtre-sujet').value.toLowerCase();
+        const dateDebut = document.getElementById('filtre-date-debut').value;
+        const dateFin   = document.getElementById('filtre-date-fin').value;
+
+        sessionsFiltrees = toutesLesSessions.filter(s => {
+            const sujetOk = !sujet || (s.sujet || '').toLowerCase().includes(sujet);
+            const d = s[COLS.SESSION_PROFESSEUR.date];
+            const dateOk = (!dateDebut || d >= dateDebut) && (!dateFin || d <= dateFin);
+            return sujetOk && dateOk;
+        });
+
+        sessionsFiltrees.sort((a, b) => {
+            let va = a[triColonne] ?? '';
+            let vb = b[triColonne] ?? '';
+            if (triColonne === 'nbEleves') { va = Number(va); vb = Number(vb); }
+            const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+            return triSens === 'asc' ? cmp : -cmp;
+        });
+
+        document.getElementById('nb-sessions').textContent =
+            `${sessionsFiltrees.length} session${sessionsFiltrees.length > 1 ? 's' : ''}`;
+
+        rendreTableau();
+    }
+
+    function changerTri(colonne) {
+        if (triColonne === colonne) {
+            triSens = triSens === 'asc' ? 'desc' : 'asc';
+        } else {
+            triColonne = colonne;
+            triSens    = 'desc';
+        }
+
+        document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+        const thActif = document.querySelector(`[onclick="changerTri('${colonne}')"]`);
+        if (thActif) {
+            thActif.classList.add('sorted');
+            thActif.querySelector('.sort-icon').textContent = triSens === 'asc' ? '↑' : '↓';
+        }
+
+        filtrerEtTrier();
+    }
+
+    /* ══════════════════════════════════════════
+       RENDU TABLEAU
+    ══════════════════════════════════════════ */
+    function rendreTableau() {
+        const tbody = document.getElementById('tbody-sessions');
+
+        if (!sessionsFiltrees.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="etat-vide">Aucune session ne correspond aux filtres.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = sessionsFiltrees.map((s, i) => `
+            <tr onclick="ouvrirDetail(${i})">
+                <td><strong>${escapeHtml(s.sujet || '—')}</strong></td>
+                <td>${formaterDate(s[COLS.SESSION_PROFESSEUR.date])}</td>
+                <td>${s[COLS.SESSION_PROFESSEUR.heure] || '—'}</td>
+                <td>
+                    <span class="badge badge-eleves">
+                        ${s.nbEleves} élève${s.nbEleves > 1 ? 's' : ''}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge badge-code">${s[COLS.SESSION_PROFESSEUR.linkSession] ?? '—'}</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    /* ══════════════════════════════════════════
+       MODAL DÉTAIL
+    ══════════════════════════════════════════ */
+    async function ouvrirDetail(index) {
+        const session = sessionsFiltrees[index];
+        if (!session) return;
+
+        document.getElementById('modal-titre').textContent = session.sujet || `Session #${session.id}`;
+        document.getElementById('modal-body').innerHTML =
+            '<p style="color:var(--text-muted);font-size:.85rem">Chargement des élèves…</p>';
+        document.getElementById('modal-detail').style.display = 'flex';
+
+        const link = session[COLS.SESSION_PROFESSEUR.linkSession];
+        if (!link) {
+            document.getElementById('modal-body').innerHTML =
+                '<p style="color:var(--text-muted);font-size:.85rem">Aucun élève pour cette session.</p>';
+            return;
+        }
+
+        // SessionEleve + profil élève joint
+        const { data: seData, error } = await db
+            .from(TABLES.SESSION_ELEVE)
+            .select(`*, ${TABLES.ELEVE}(${COLS.ELEVE.nom}, ${COLS.ELEVE.prenom})`)
+            .eq(COLS.SESSION_ELEVE.link, link);
+
+        if (error || !seData || seData.length === 0) {
+            document.getElementById('modal-body').innerHTML =
+                '<p style="color:var(--text-muted);font-size:.85rem">Aucun élève trouvé.</p>';
+            return;
+        }
+
+        const cartes = seData.map(se => {
+            const profil  = se.eleve || { nom: 'Inconnu', prenom: '' };
+            const valeurs = (se[COLS.SESSION_ELEVE.dataMesure]?.valeurs) || [];
+            const min     = valeurs.length ? Math.min(...valeurs) : '—';
+            const max     = valeurs.length ? Math.max(...valeurs) : '—';
+            const avg     = valeurs.length
+                ? (valeurs.reduce((s, v) => s + v, 0) / valeurs.length).toFixed(1)
+                : '—';
+
+            return `
+                <div class="eleve-card">
+                    <div class="eleve-nom">
+                        ${escapeHtml((profil.prenom || '') + ' ' + (profil.nom || ''))}
+                    </div>
+                    <div class="eleve-stats">
+                        <span class="eleve-stat">Min : <span>${min}</span></span>
+                        <span class="eleve-stat">Max : <span>${max}</span></span>
+                        <span class="eleve-stat">Moy : <span>${avg}</span></span>
+                        <span class="eleve-stat">Durée : <span>${escapeHtml(se[COLS.SESSION_ELEVE.duree] || '—')}</span></span>
+                        <span class="eleve-stat">Type : <span>${escapeHtml(se[COLS.SESSION_ELEVE.typeMesure] || '—')}</span></span>
+                    </div>
+                </div>`;
+        }).join('');
+
+        document.getElementById('modal-body').innerHTML =
+            `<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:4px">
+                ${seData.length} élève${seData.length > 1 ? 's' : ''} — code session :
+                <strong style="color:var(--accent)">${link}</strong>
+             </p>` + cartes;
+    }
+
+    function fermerModal() {
+        document.getElementById('modal-detail').style.display = 'none';
+    }
+
+    /* ══════════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════════ */
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+</script>
+</body>
+</html>
