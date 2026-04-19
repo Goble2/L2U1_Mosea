@@ -1,14 +1,33 @@
-let sessions   = null;
-let listeEleve = null;
+// ═══════════════════════════════════════════════════════════════
+//  src/professeur.js
+//  Logique de la page AnalyseProfesseur.html :
+//  - chargement des sessions créées par le professeur connecté
+//  - pour une session : affichage des élèves présents
+//  - vue individuelle d'un élève OU vue "tous les élèves"
+//  - panneau Paramètres (suppression session, suppression compte)
+// ═══════════════════════════════════════════════════════════════
 
-// ── Init ──────────────────────────────────────────────────────
+
+// Variables globales utilisées par les gestionnaires de clics.
+let sessions   = null;   // sessions du professeur connecté
+let listeEleve = null;   // sessions des élèves de la session sélectionnée
+
+
+// ─── Initialisation de la page ────────────────────────────────
 async function PageProfesseur() {
     const utilisateur = requireAuth('professeur');
 
-    document.getElementById('userInfo').textContent = nomComplet(utilisateur.nom, utilisateur.prenom);
-    document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
+    // Affichage du nom en haut à droite
+    document.getElementById('userInfo').textContent =
+        nomComplet(utilisateur.nom, utilisateur.prenom);
 
-    sessions = await recupererSessionsProfesseur(utilisateur[COLS.PROFESSEUR.id]);
+    // Bouton de déconnexion
+    document.getElementById('btn-deconnexion')
+        .addEventListener('click', deconnecter);
+
+    // Chargement des sessions du professeur
+    const idProf = utilisateur[COLS.PROFESSEUR.id];
+    sessions = await recupererSessionsProfesseur(idProf);
 
     if (!sessions || sessions.length === 0) {
         afficherEtatVide('Aucune session disponible.');
@@ -17,17 +36,25 @@ async function PageProfesseur() {
     afficherListeSessions(sessions);
 }
 
-// ── Supabase ──────────────────────────────────────────────────
-async function recupererSessionsProfesseur(idprofesseur) {
+
+// ─── Requête : sessions d'un professeur ───────────────────────
+async function recupererSessionsProfesseur(idProfesseur) {
     const { data, error } = await db
         .from(TABLES.SESSION_PROFESSEUR)
         .select('*')
-        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idProfesseur);
 
-    if (error) { console.error('Erreur sessions prof :', error); return null; }
+    if (error) {
+        console.error('Erreur sessions prof :', error);
+        return null;
+    }
     return data;
 }
 
+
+// ─── Requête : sessions des élèves d'une session prof ─────────
+// On utilise une jointure Supabase pour récupérer d'un coup
+// les noms et prénoms des élèves (depuis la table eleve).
 async function recupererSessionsEleve(listeId, linkSession) {
     const { data, error } = await db
         .from(TABLES.SESSION_ELEVE)
@@ -35,49 +62,68 @@ async function recupererSessionsEleve(listeId, linkSession) {
         .eq(COLS.SESSION_ELEVE.link, linkSession)
         .in(COLS.SESSION_ELEVE.idEleve, listeId);
 
-    if (error) { console.error('Erreur sessions élève :', error); return null; }
+    if (error) {
+        console.error('Erreur sessions élève :', error);
+        return null;
+    }
     return data;
 }
 
-// ── Liste sessions ────────────────────────────────────────────
+
+// ─── Affichage de la liste latérale des sessions du prof ─────
 function afficherListeSessions(data) {
     const container = document.getElementById('sessions-list');
     if (!container) return;
-    container.innerHTML = data.map((session, i) => {
+
+    const html = data.map((session, i) => {
         const listeEleveStr = String(session.listeeleve);
         return `
-        <div class="session-card" onclick="changerSession([${listeEleveStr}], ${session.linksession}, ${i})">
+        <div class="session-card"
+             onclick="changerSession([${listeEleveStr}], ${session.linksession}, ${i})">
             <p><strong>Session ${session.linksession} du ${session.Date} à ${session.Heure}</strong></p>
             <p>Sujet : ${session.sujet}</p>
         </div>`;
     }).join('');
+
+    container.innerHTML = html;
 }
 
-// ── Changement de session ─────────────────────────────────────
+
+// ─── Clic sur une session : charger les élèves présents ──────
 async function changerSession(listeEleveNum, linkSession, index) {
     listeEleve = null;
     document.getElementById('list-eleve').innerHTML = '';
     resetStatsUI();
 
-    document.querySelectorAll('.session-card')
-        .forEach((el, i) => el.classList.toggle('active', i === index));
+    // Mettre en surbrillance la carte cliquée
+    const cartes = document.querySelectorAll('.session-card');
+    cartes.forEach((carte, i) => {
+        carte.classList.toggle('active', i === index);
+    });
 
     await afficherElevesPresents(listeEleveNum, linkSession);
     afficherResultatAll();
 }
 
+
 function resetStatsUI() {
-    ['Max', 'Min', 'Avg', 'Mesure', 'time', 'date'].forEach(id => {
+    const champs = ['Max', 'Min', 'Avg', 'Mesure', 'time', 'date'];
+    champs.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = '—';
     });
-    const chartTitle = document.getElementById('chart-title');
-    if (chartTitle) chartTitle.textContent = 'Graphe';
+
+    const titre = document.getElementById('chart-title');
+    if (titre) titre.textContent = 'Graphe';
+
     const container = document.getElementById('graphe-container');
     if (container) container.innerHTML = '';
 }
 
-// ── Panel élèves présents ─────────────────────────────────────
+
+// ─── Panneau "élèves présents" ────────────────────────────────
+// On affiche une carte spéciale "Tous les élèves" en premier,
+// puis une carte par élève présent dans la session.
 async function afficherElevesPresents(listeEleveNum, linkSession) {
     const container = document.getElementById('list-eleve');
     if (!container) return;
@@ -100,19 +146,22 @@ async function afficherElevesPresents(listeEleveNum, linkSession) {
     container.innerHTML = carteAll + cartesEleves;
 }
 
-// ── Résultat un élève ─────────────────────────────────────────
+
+// ─── Vue individuelle d'un élève ──────────────────────────────
 function afficherResultatEleve(index) {
     if (!listeEleve) return;
+
     const session = listeEleve[index];
     const valeurs = session.datamesure?.valeurs;
     const temps   = session.datamesure?.temps;
+
     if (!valeurs || !temps) return;
 
-    const { min, max, moyenne } = moyenneMinMax(valeurs);
+    const stats = moyenneMinMax(valeurs);
 
-    document.getElementById('Max').textContent    = max;
-    document.getElementById('Min').textContent    = min;
-    document.getElementById('Avg').textContent    = moyenne.toFixed(2);
+    document.getElementById('Max').textContent    = stats.max;
+    document.getElementById('Min').textContent    = stats.min;
+    document.getElementById('Avg').textContent    = stats.moyenne.toFixed(2);
     document.getElementById('Mesure').textContent = session.duree ?? '—';
     document.getElementById('time').textContent   = session.heur;
     document.getElementById('date').textContent   = session.date;
@@ -122,17 +171,23 @@ function afficherResultatEleve(index) {
         buildSingleChart(valeurs, temps, session.typemesure);
 }
 
-// ── Résultat tous les élèves ──────────────────────────────────
+
+// ─── Vue agrégée "Tous les élèves" ────────────────────────────
+// On regroupe les sessions par type de mesure (Subjectif vs Objectif)
+// puis on dessine un bloc (graphique + stats) par groupe.
+// [Regroupement et rendu multi-courbes : assisté par IA]
 function afficherResultatAll() {
     if (!listeEleve || listeEleve.length === 0) return;
 
-    ['Max', 'Min', 'Avg', 'Mesure', 'time', 'date'].forEach(id => {
+    // Réinitialiser les stats individuelles
+    const champs = ['Max', 'Min', 'Avg', 'Mesure', 'time', 'date'];
+    champs.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = '—';
     });
     document.getElementById('chart-title').textContent = 'Graphes par type de mesure';
 
-    // Regrouper par type de mesure
+    // 1) Regrouper les sessions par type de mesure
     const groupes = {};
     listeEleve.forEach(item => {
         const type = item.typemesure || 'Inconnu';
@@ -140,35 +195,50 @@ function afficherResultatAll() {
         groupes[type].push(item);
     });
 
-    const html = Object.entries(groupes).map(([type, items], idx) => {
-        const couleur    = COLORS_ALL[idx % COLORS_ALL.length];
-        const { valMax } = getAxe(type);
+    // 2) Construire un bloc HTML pour chaque groupe
+    const blocs = Object.entries(groupes).map(([type, items], idx) => {
+        return construireBlocGroupe(type, items, idx);
+    });
 
-        const vGroupe = items.flatMap(e => e.datamesure?.valeurs || []);
-        const stats   = vGroupe.length > 0 ? moyenneMinMax(vGroupe) : null;
+    document.getElementById('graphe-container').innerHTML = blocs.join('');
+}
 
-        const tempsMax = Math.max(...items.map(e => {
-            const t = e.datamesure?.temps;
-            return t ? t[t.length - 1] : 0;
-        }));
 
-        const polylines = items.map((item, i) => {
-            const v = item.datamesure?.valeurs;
-            const t = item.datamesure?.temps;
-            if (!v || !t) return '';
-            const opacity = (0.35 + (0.65 / items.length) * (i + 1)).toFixed(2);
-            const pts = genererPoints(v, t, valMax, tempsMax);
-            return `<polyline fill="none" stroke="${couleur}" stroke-width="0.4" opacity="${opacity}" points="${pts}"/>`;
-        }).join('');
+// ─── Construire un bloc "graphique + stats" pour un groupe ───
+function construireBlocGroupe(type, items, idx) {
+    const couleur = COLORS_ALL[idx % COLORS_ALL.length];
+    const axe     = getAxe(type);
 
-        const statsHTML = stats ? `
-            <span class="all-stat"><span class="all-stat-label">Min</span>    <span class="all-stat-value">${stats.min}</span></span>
-            <span class="all-stat"><span class="all-stat-label">Max</span>    <span class="all-stat-value">${stats.max}</span></span>
-            <span class="all-stat"><span class="all-stat-label">Moy</span>    <span class="all-stat-value">${stats.moyenne.toFixed(2)}</span></span>
-            <span class="all-stat"><span class="all-stat-label">Élèves</span> <span class="all-stat-value">${items.length}</span></span>`
-            : '<span class="all-stat-label">Aucune donnée</span>';
+    // Toutes les valeurs du groupe, pour calculer des stats globales
+    const toutesValeurs = items.flatMap(e => e.datamesure?.valeurs || []);
+    const stats = toutesValeurs.length > 0 ? moyenneMinMax(toutesValeurs) : null;
 
-        return `
+    // Durée la plus longue parmi les élèves, pour aligner les courbes
+    const tempsMax = Math.max(...items.map(e => {
+        const temps = e.datamesure?.temps;
+        return temps ? temps[temps.length - 1] : 0;
+    }));
+
+    // Une polyline par élève, avec une opacité différente pour les distinguer
+    const polylines = items.map((item, i) => {
+        const valeurs = item.datamesure?.valeurs;
+        const temps   = item.datamesure?.temps;
+        if (!valeurs || !temps) return '';
+
+        const opacity = (0.35 + (0.65 / items.length) * (i + 1)).toFixed(2);
+        const points  = genererPoints(valeurs, temps, axe.valMax, tempsMax);
+        return `<polyline fill="none" stroke="${couleur}" stroke-width="0.4" opacity="${opacity}" points="${points}"/>`;
+    }).join('');
+
+    // Stats (ou message "aucune donnée")
+    const statsHTML = stats
+        ? `<span class="all-stat"><span class="all-stat-label">Min</span>    <span class="all-stat-value">${stats.min}</span></span>
+           <span class="all-stat"><span class="all-stat-label">Max</span>    <span class="all-stat-value">${stats.max}</span></span>
+           <span class="all-stat"><span class="all-stat-label">Moy</span>    <span class="all-stat-value">${stats.moyenne.toFixed(2)}</span></span>
+           <span class="all-stat"><span class="all-stat-label">Élèves</span> <span class="all-stat-value">${items.length}</span></span>`
+        : '<span class="all-stat-label">Aucune donnée</span>';
+
+    return `
         <div class="all-chart-block" style="--block-color:${couleur}">
             <div class="all-chart-header">
                 <span class="all-chart-type">${type}</span>
@@ -176,37 +246,40 @@ function afficherResultatAll() {
             </div>
             ${buildChartHTML(polylines, genererTicksHTML(tempsMax), type, couleur)}
         </div>`;
-    }).join('');
-
-    document.getElementById('graphe-container').innerHTML = html;
 }
 
-// ── État vide ─────────────────────────────────────────────────
+
+// ─── État vide ────────────────────────────────────────────────
 function afficherEtatVide(message) {
     const container = document.getElementById('sessions-list');
-    if (container)
-        container.innerHTML = `<p style="padding:16px;color:var(--text-muted);font-size:.85rem">${message}</p>`;
+    if (container) {
+        container.innerHTML =
+            `<p style="padding:16px;color:var(--text-muted);font-size:.85rem">${message}</p>`;
+    }
 }
 
-// ── Paramètres ────────────────────────────────────────────────
+
+// ─── Panneau Paramètres ───────────────────────────────────────
 function toggleParametres() {
     const panel       = document.getElementById('panel-params');
     const mainContent = document.getElementById('main-content');
     const btn         = document.getElementById('btn-params');
-    const isOpen      = panel.style.display === 'flex';
+    const ouvert      = panel.style.display === 'flex';
 
-    panel.style.display       = isOpen ? 'none' : 'flex';
-    mainContent.style.display = isOpen ? 'flex' : 'none';
-    btn.textContent           = isOpen ? 'Paramètres' : '← Retour';
-    btn.classList.toggle('header-btn--active', !isOpen);
+    panel.style.display       = ouvert ? 'none' : 'flex';
+    mainContent.style.display = ouvert ? 'flex' : 'none';
+    btn.textContent           = ouvert ? 'Paramètres' : '← Retour';
+    btn.classList.toggle('header-btn--active', !ouvert);
 
-    if (!isOpen) {
+    if (!ouvert) {
         setMsg('msg-session', '', '');
-        setMsg('msg-compte', '', '');
+        setMsg('msg-compte',  '', '');
         document.getElementById('confirm-compte')?.remove();
     }
 }
 
+
+// ─── Modal d'aide ─────────────────────────────────────────────
 function toggleAide() {
     const modal = document.getElementById('modal-aide');
     modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
@@ -216,33 +289,48 @@ function closeModal(id) {
     document.getElementById(id).style.display = 'none';
 }
 
-function setMsg(id, text, type) {
+
+// ─── Helper pour les messages (succès/erreur) ─────────────────
+function setMsg(id, texte, type) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = text;
+    el.textContent = texte;
     el.className   = 'params-msg' + (type ? ' ' + type : '');
 }
 
-// ── Supprimer une session ─────────────────────────────────────
+
+// ─── Suppression d'une session par son identifiant ────────────
+// Cascade : on supprime d'abord les SessionEleve qui pointent
+// vers cette linksession, puis la SessionProfesseur elle-même.
 async function supprimerSession() {
     const id = parseInt(document.getElementById('input-session-id').value, 10);
-    if (!id || id <= 0) { setMsg('msg-session', 'Identifiant invalide.', 'error'); return; }
+
+    if (!id || id <= 0) {
+        setMsg('msg-session', 'Identifiant invalide.', 'error');
+        return;
+    }
+
     setMsg('msg-session', 'Suppression en cours…', '');
 
-    // Cascade : SessionEleve.link === linksession
+    // 1) Cascade sur SessionEleve
     await db.from(TABLES.SESSION_ELEVE)
         .delete()
         .eq(COLS.SESSION_ELEVE.link, id);
 
+    // 2) Supprimer la SessionProfesseur
     const { error } = await db.from(TABLES.SESSION_PROFESSEUR)
         .delete()
         .eq(COLS.SESSION_PROFESSEUR.linkSession, id);
 
-    if (error) { setMsg('msg-session', `Erreur : ${error.message}`, 'error'); return; }
+    if (error) {
+        setMsg('msg-session', `Erreur : ${error.message}`, 'error');
+        return;
+    }
 
     setMsg('msg-session', `Session ${id} supprimée.`, 'success');
     document.getElementById('input-session-id').value = '';
 
+    // Recharger la liste des sessions
     const utilisateur = getUtilisateur();
     if (utilisateur) {
         sessions = await recupererSessionsProfesseur(utilisateur[COLS.PROFESSEUR.id]);
@@ -250,9 +338,11 @@ async function supprimerSession() {
     }
 }
 
-// ── Supprimer le compte ───────────────────────────────────────
+
+// ─── Suppression de compte : demande de confirmation ─────────
 function confirmerSuppressionCompte() {
     if (document.getElementById('confirm-compte')) return;
+
     setMsg('msg-compte', '', '');
 
     const div = document.createElement('div');
@@ -264,26 +354,41 @@ function confirmerSuppressionCompte() {
             <button class="params-btn params-btn--danger" id="btn-confirm-delete">Oui, supprimer</button>
             <button class="params-btn params-btn--cancel" id="btn-cancel-delete">Annuler</button>
         </div>`;
+
     document.getElementById('msg-compte').after(div);
-    document.getElementById('btn-confirm-delete').addEventListener('click', supprimerCompteProfesseur);
-    document.getElementById('btn-cancel-delete').addEventListener('click', () => div.remove());
+
+    document.getElementById('btn-confirm-delete')
+        .addEventListener('click', supprimerCompteProfesseur);
+    document.getElementById('btn-cancel-delete')
+        .addEventListener('click', () => div.remove());
 }
 
+
+// ─── Suppression effective du compte professeur ──────────────
+// Trois étapes en cascade :
+//   1) récupérer tous les linksession du prof
+//   2) supprimer toutes les SessionEleve qui référencent ces linksession
+//   3) supprimer les SessionProfesseur du prof
+//   4) supprimer le prof lui-même
 async function supprimerCompteProfesseur() {
     const utilisateur = getUtilisateur();
-    if (!utilisateur) { setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error'); return; }
+    if (!utilisateur) {
+        setMsg('msg-compte', 'Aucun utilisateur connecté.', 'error');
+        return;
+    }
 
-    const idprofesseur = utilisateur[COLS.PROFESSEUR.id];
+    const idProf = utilisateur[COLS.PROFESSEUR.id];
 
     document.getElementById('confirm-compte')?.remove();
     setMsg('msg-compte', 'Suppression en cours…', '');
 
-    // 1) Récupérer les linksession du prof pour cascade sur SessionEleve
+    // 1) Lister les linksession de ce prof
     const { data: sessionsProf } = await db
         .from(TABLES.SESSION_PROFESSEUR)
         .select(COLS.SESSION_PROFESSEUR.linkSession)
-        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idProf);
 
+    // 2) Cascade sur SessionEleve
     if (sessionsProf && sessionsProf.length > 0) {
         const links = sessionsProf.map(s => s[COLS.SESSION_PROFESSEUR.linkSession]);
         await db.from(TABLES.SESSION_ELEVE)
@@ -291,26 +396,32 @@ async function supprimerCompteProfesseur() {
             .in(COLS.SESSION_ELEVE.link, links);
     }
 
-    // 2) Supprimer les SessionProfesseur
+    // 3) Supprimer les SessionProfesseur
     await db.from(TABLES.SESSION_PROFESSEUR)
         .delete()
-        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idprofesseur);
+        .eq(COLS.SESSION_PROFESSEUR.idProfesseur, idProf);
 
-    // 3) Supprimer le professeur
+    // 4) Supprimer le prof lui-même
     const { error } = await db.from(TABLES.PROFESSEUR)
         .delete()
-        .eq(COLS.PROFESSEUR.id, idprofesseur);
+        .eq(COLS.PROFESSEUR.id, idProf);
 
-    if (error) { setMsg('msg-compte', `Erreur : ${error.message}`, 'error'); return; }
+    if (error) {
+        setMsg('msg-compte', `Erreur : ${error.message}`, 'error');
+        return;
+    }
 
     sessionStorage.clear();
     setMsg('msg-compte', 'Compte supprimé. Redirection…', 'success');
     setTimeout(() => { window.location.href = 'Connexion.html'; }, 2000);
 }
 
+
+// ─── Navigation vers l'historique ─────────────────────────────
 function goToHistorique() {
     window.location.href = 'Historique.html';
 }
 
-// ── Boot ──────────────────────────────────────────────────────
+
+// ─── Point d'entrée : lancement de la page ────────────────────
 document.addEventListener('DOMContentLoaded', PageProfesseur);
