@@ -1,0 +1,15 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background rounded square -->
+  <rect width="200" height="200" rx="40" fill="#4f6ef7"/>
+  <!-- Subtle inner glow -->
+  <rect width="200" height="200" rx="40" fill="url(#glow)" opacity="0.3"/>
+  <defs>
+    <radialGradient id="glow" cx="30%" cy="30%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Letter M - bold geometric -->
+  <path d="M 38 155 L 38 55 L 60 55 L 100 120 L 140 55 L 162 55 L 162 155 L 140 155 L 140 95 L 108 148 L 92 148 L 60 95 L 60 155 Z" 
+        fill="white"/>
+</svg>
