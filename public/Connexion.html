@@ -10,70 +10,70 @@
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <div class="login-card">
+<div class="login-wrapper">
+    <div class="login-card">
 
-            <div class="login-header">
-                <a href="../index.html" class="btn-accueil">← Accueil</a>
-                <div class="header-brand">
-                    <span class="brand-dot"></span>
-                    <span class="brand-name">Mosea Analyse</span>
-                </div>
-                <p class="login-subtitle">Connexion</p>
+        <div class="login-header">
+            <a href="../index.html" class="btn-accueil">← Accueil</a>
+            <div class="header-brand">
+                <span class="brand-dot"></span>
+                <span class="brand-name">Mosea Analyse</span>
             </div>
+            <p class="login-subtitle">Connexion</p>
+        </div>
 
-            <div class="login-body">
-                <form id="loginForm">
+        <div class="login-body">
+            <form id="loginForm">
 
-                    <div class="form-group">
-                        <label for="Mode">Mode</label>
-                        <select id="Mode" name="Mode">
-                            <option value="Education">Éducation</option>
-                            <option value="Aviation">Aviation</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="Mode">Mode</label>
+                    <select id="Mode" name="Mode">
+                        <option value="Education">Éducation</option>
+                        <option value="Aviation">Aviation</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label for="Role">Rôle</label>
-                        <select id="Role" name="Role">
-                            <option value="professeur">Professeur</option>
-                            <option value="élève">Élève</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="Role">Rôle</label>
+                    <select id="Role" name="Role">
+                        <option value="professeur">Professeur</option>
+                        <option value="élève">Élève</option>
+                    </select>
+                </div>
 
+                <!-- Champs Nom / Prénom (mode par défaut) -->
+                <div id="champs-nom-prenom">
                     <div class="form-group">
                         <label for="nom">Nom</label>
                         <input type="text" id="nom" name="nom" placeholder="Votre nom">
                     </div>
-
                     <div class="form-group">
                         <label for="prenom">Prénom</label>
                         <input type="text" id="prenom" name="prenom" placeholder="Votre prénom">
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="mdp">Mot de passe</label>
-                        <input type="password" id="mdp" name="mdp" placeholder="••••••••">
-                    </div>
+                <div class="form-group">
+                    <label for="mdp">Mot de passe</label>
+                    <input type="password" id="mdp" name="mdp" placeholder="••••••••">
+                </div>
 
-                    <p id="msg-erreur" class="msg-erreur"></p>
+                <p id="msg-erreur" class="msg-erreur"></p>
 
-                    <button type="submit" id="connexionButton" class="btn-connexion">
-                        Se connecter
-                    </button>
+                <button type="submit" id="connexionButton" class="btn-connexion">
+                    Se connecter
+                </button>
 
-                </form>
-            </div>
-
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Ordre impératif : supabase CDN → config → supabase client → auth → login -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../src/config.js"></script>
-    <script src="../src/supabase.js"></script>
-    <script src="../src/auth.js"></script>
-    <script src="../src/login.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../src/config.js"></script>
+<script src="../src/supabase.js"></script>
+<script src="../src/auth.js"></script>
+<script src="../src/login.js"></script>
 
 </body>
 </html>
