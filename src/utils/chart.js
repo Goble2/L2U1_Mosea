@@ -1,148 +1,110 @@
-// ═══════════════════════════════════════════════════════════════
-//  src/utils/chart.js
-//  Toute la logique de construction des graphes SVG.
-//  Partagée entre indexEleve.js et indexProfesseur.js.
-// ═══════════════════════════════════════════════════════════════
+// ── Utilitaires graphiques SVG — MOSEA ───────────────────────
+// Généré avec assistance IA (Claude, Anthropic)
 
+// ── SVG viewBox (unités internes) ────────────────────────────
+const CHART_W     = 100;   // largeur utile du tracé
+const CHART_H     = 50;    // hauteur utile du tracé
+const CHART_PAD_X = 8;     // marge gauche (axe Y)
+const CHART_PAD_Y = 4;     // marge haute/basse
 
-// ═══════════════════════════════════════════════════════════════
-//  AXES
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Retourne la config d'axe pour un type de mesure.
- * Fallback sur Subjectif si le type est inconnu.
- * @param {'Subjectif'|'Objectif'} type
- */
-function getAxe(type) {
-    return AXES[type] || AXES.Subjectif;
+// ── Formatage de la durée en axe X ───────────────────────────
+// Choisit automatiquement l'unité selon l'amplitude (secondes vs minutes)
+function formaterTempsAxe(secondes) {
+    if (secondes >= 120) {
+        const min = Math.round(secondes / 60);
+        return min + ' min';
+    }
+    return secondes + 's';
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  POINTS SVG
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Calcule les coordonnées SVG pour une série de valeurs.
- * Système de coordonnées : viewBox 0 0 100 100
- *   x : 10% → 95% de la largeur
- *   y : 95 - (v / valMax * 90)  → 5 = haut, 95 = bas
- *
- * @param {number[]} valeurs   - Valeurs mesurées
- * @param {number[]} temps     - Timestamps en secondes
- * @param {number}   valMax    - Valeur max de l'axe Y
- * @param {number}   tempsMax  - Durée totale (pour normaliser l'axe X)
- * @returns {string} Points au format SVG "x1,y1 x2,y2 ..."
- */
-function genererPoints(valeurs, temps, valMax, tempsMax) {
-    const duree = tempsMax || temps[temps.length - 1];
+// ── Génère les points SVG normalisés ─────────────────────────
+// valeurs  : tableau de mesures
+// temps    : tableau de timestamps (en secondes depuis début)
+// valMax   : valeur maximale de l'axe Y (ex : 5 pour subjectif, 220 pour objectif)
+// dureeMax : durée totale de référence en secondes (au moins 1 pour éviter ÷0)
+function genererPoints(valeurs, temps, valMax, dureeMax) {
+    const dMax = Math.max(dureeMax, 1);
     return valeurs.map((v, i) => {
-        const x = 10 + (temps[i] / duree) * 85;
-        const y = 95 -  (v / valMax)      * 90;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
+        const x = CHART_PAD_X + (temps[i] / dMax) * CHART_W;
+        const y = CHART_PAD_Y + CHART_H - (v / valMax) * CHART_H;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
     }).join(' ');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  AXE X
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Génère les ticks HTML de l'axe X.
- * Choisit automatiquement le pas le plus lisible.
- * @param {number} dureeTotal - Durée totale en secondes
- * @returns {string} HTML des ticks
- */
-function genererTicksHTML(dureeTotal) {
-    if (!dureeTotal || dureeTotal === 0) return '';
-    const candidats = [5, 10, 15, 20, 30, 60, 120, 180, 300, 600];
-    const pas = candidats.find(p => dureeTotal / p <= 8) || 600;
-    let html = '';
-    for (let t = 0; t <= dureeTotal; t += pas) {
-        const pct = (t / dureeTotal) * 100;
-        html += `<span class="x-tick" style="left:${pct.toFixed(1)}%">${formaterTemps(t)}</span>`;
-    }
-    return html;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  GRILLE
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Génère les lignes de grille SVG alignées sur les ticks Y.
- * @param {'Subjectif'|'Objectif'} type
- * @returns {string} SVG <line> elements
- */
-function buildGridLines(type) {
-    const { yTicks, valMax } = getAxe(type);
-    return yTicks.map(v => {
-        const y = (95 - (v / valMax * 90)).toFixed(1);
-        return `<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="var(--grid)" stroke-width="0.5"/>`;
+// ── Génère les ticks de l'axe X en HTML ──────────────────────
+// dureeMax : durée totale en secondes
+// Affiche 5 ticks répartis uniformément ; adapte l'unité (s / min)
+function genererTicksHTML(dureeMax) {
+    const dMax  = Math.max(dureeMax, 1);
+    const steps = 5;
+    return Array.from({ length: steps + 1 }, (_, i) => {
+        const t      = Math.round((i / steps) * dMax);
+        const pct    = (i / steps) * 100;
+        const label  = formaterTempsAxe(t);
+        return `<span style="left:${pct.toFixed(1)}%">${label}</span>`;
     }).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  CONSTRUCTION HTML COMPLÈTE DU GRAPHE
-// ═══════════════════════════════════════════════════════════════
+// ── Génère les lignes de grille horizontales ─────────────────
+function buildGridLines(yTicks, valMax) {
+    return yTicks.map(v => {
+        const y = (CHART_PAD_Y + CHART_H - (v / valMax) * CHART_H).toFixed(2);
+        return `<line x1="${CHART_PAD_X}" y1="${y}" x2="${CHART_PAD_X + CHART_W}" y2="${y}"
+                      stroke="var(--border)" stroke-width="0.3" stroke-dasharray="1,1"/>`;
+    }).join('');
+}
 
-/**
- * Construit le HTML complet d'un graphe (axes + SVG + ticks X).
- *
- * @param {string} polylinesHTML  - SVG <polyline> elements
- * @param {string} ticksXHTML     - HTML des ticks X
- * @param {string} type           - 'Subjectif' | 'Objectif'
- * @param {string} [couleur]      - Couleur principale (défaut: var(--accent))
- * @returns {string} HTML complet du graphe
- */
-function buildChartHTML(polylinesHTML, ticksXHTML, type, couleur = 'var(--accent)') {
-    const { yTicks } = getAxe(type);
-    const yHTML = yTicks.map(v => `<span class="y-tick">${v}</span>`).join('');
+// ── Génère les labels de l'axe Y ─────────────────────────────
+function buildYLabels(yTicks, valMax) {
+    return yTicks.map(v => {
+        const y = (CHART_PAD_Y + CHART_H - (v / valMax) * CHART_H + 1).toFixed(2);
+        return `<text x="${(CHART_PAD_X - 1).toFixed(2)}" y="${y}"
+                      font-size="3" fill="var(--text-muted)" text-anchor="end">${v}</text>`;
+    }).join('');
+}
+
+// ── Retourne l'axe correspondant au type de mesure ───────────
+function getAxe(type) {
+    return AXES[type] || AXES['Subjectif'];
+}
+
+// ── Retourne min / max / moyenne d'un tableau ────────────────
+function moyenneMinMax(valeurs) {
+    if (!valeurs || valeurs.length === 0) return { min: 0, max: 0, moyenne: 0 };
+    const min     = Math.min(...valeurs);
+    const max     = Math.max(...valeurs);
+    const moyenne = valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+    return { min, max, moyenne };
+}
+
+// ── Construit le HTML complet d'un bloc graphe ───────────────
+function buildChartHTML(polylines, ticksHTML, type, couleur) {
+    const { valMax, yTicks } = getAxe(type);
+    const gridLines = buildGridLines(yTicks, valMax);
+    const yLabels   = buildYLabels(yTicks, valMax);
+    const vbW = CHART_PAD_X + CHART_W + 2;
+    const vbH = CHART_PAD_Y * 2 + CHART_H + 4;
 
     return `
-    <div class="chart">
-        <div class="y-axis">${yHTML}</div>
-        <div class="chart-svg-area">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="line-chart">
-                ${buildGridLines(type)}
-                ${polylinesHTML}
-            </svg>
-            <div class="x-axis x-axis--relative">${ticksXHTML}</div>
-        </div>
+    <div class="chart-wrap">
+        <svg viewBox="0 0 ${vbW} ${vbH}" xmlns="http://www.w3.org/2000/svg"
+             preserveAspectRatio="none" class="chart-svg">
+            ${gridLines}
+            ${yLabels}
+            ${polylines}
+        </svg>
+        <div class="chart-ticks-x">${ticksHTML}</div>
     </div>`;
 }
 
-/**
- * Graphe pour un seul élève / une seule série.
- *
- * @param {number[]} valeurs
- * @param {number[]} temps
- * @param {string}   type    - 'Subjectif' | 'Objectif'
- * @returns {string} HTML du graphe
- */
+// ── Construit un graphe pour un seul élève ───────────────────
 function buildSingleChart(valeurs, temps, type) {
     const { valMax } = getAxe(type);
-    const duree     = temps[temps.length - 1];
-    const pts       = genererPoints(valeurs, temps, valMax, duree);
-    const polyline  = `<polyline fill="none" stroke="var(--accent)" stroke-width="0.5" points="${pts}"/>`;
-    return buildChartHTML(polyline, genererTicksHTML(duree), type);
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  STATS
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Calcule min, max et moyenne d'un tableau de nombres.
- * @param {number[]} tab
- * @returns {{ min: number, max: number, moyenne: number }}
- */
-function moyenneMinMax(tab) {
-    let somme = 0, min = tab[0], max = tab[0];
-    for (const v of tab) {
-        somme += v;
-        if (v < min) min = v;
-        if (v > max) max = v;
-    }
-    return { min, max, moyenne: somme / tab.length };
+    const dureeMax   = Math.max(...temps, 1);
+    const pts        = genererPoints(valeurs, temps, valMax, dureeMax);
+    const couleur    = type === 'Subjectif' ? 'var(--accent)' : '#e67e22';
+    const polyline   = `<polyline fill="none" stroke="${couleur}" stroke-width="0.6"
+                                  stroke-linejoin="round" stroke-linecap="round"
+                                  points="${pts}"/>`;
+    return buildChartHTML(polyline, genererTicksHTML(dureeMax), type, couleur);
 }
