@@ -147,17 +147,24 @@ function afficherResultatAll() {
         const vGroupe = items.flatMap(e => e.datamesure?.valeurs || []);
         const stats   = vGroupe.length > 0 ? moyenneMinMax(vGroupe) : null;
 
-        const tempsMax = Math.max(...items.map(e => {
+        // Bornes de l'axe X : min de tous les temps[0], max de tous les temps[last]
+        const tMinGroupe = Math.min(...items.map(e => e.datamesure?.temps?.[0] ?? 0));
+        const tMaxGroupe = Math.max(...items.map(e => {
             const t = e.datamesure?.temps;
-            return t ? t[t.length - 1] : 0;
+            return (t && t.length > 0) ? t[t.length - 1] : 0;
         }));
+        const tMaxSafe = tMaxGroupe > tMinGroupe ? tMaxGroupe : tMinGroupe + 1;
 
         const polylines = items.map((item, i) => {
             const v = item.datamesure?.valeurs;
             const t = item.datamesure?.temps;
-            if (!v || !t) return '';
+            if (!v || !t || v.length === 0) return '';
             const opacity = (0.35 + (0.65 / items.length) * (i + 1)).toFixed(2);
-            const pts = genererPoints(v, t, valMax, tempsMax);
+            const pts = v.map((val, j) => {
+                const x = (((t[j] ?? 0) - tMinGroupe) / (tMaxSafe - tMinGroupe) * 400).toFixed(2);
+                const y = (8 + 184 * (1 - Math.max(0, Math.min(val, valMax)) / valMax)).toFixed(2);
+                return `${x},${y}`;
+            }).join(' ');
             return `<polyline fill="none" stroke="${couleur}" stroke-width="0.4" opacity="${opacity}" points="${pts}"/>`;
         }).join('');
 
@@ -174,7 +181,7 @@ function afficherResultatAll() {
                 <span class="all-chart-type">${type}</span>
                 <div class="all-chart-stats">${statsHTML}</div>
             </div>
-            ${buildChartHTML(polylines, genererTicksHTML(tempsMax), type, couleur)}
+            ${buildChartHTML(polylines, genererTicksHTML(tMinGroupe, tMaxSafe), type, couleur)}
         </div>`;
     }).join('');
 
@@ -314,3 +321,28 @@ function goToHistorique() {
 
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', PageProfesseur);
+
+// ── Export CSV ────────────────────────────────────────────────
+function exporterCSV() {
+    const msgEl = document.getElementById('msg-export');
+    if (!listeEleve || listeEleve.length === 0) {
+        if (msgEl) msgEl.textContent = 'Aucune session sélectionnée.';
+        return;
+    }
+    const lignes = [['Nom', 'Prénom', 'Type mesure', 'Date', 'Heure', 'Durée', 'Valeurs', 'Temps (s)']];
+    listeEleve.forEach(item => {
+        lignes.push([
+            item.eleve?.nom ?? '', item.eleve?.prenom ?? '',
+            item.typemesure ?? '', item.date ?? '', item.heur ?? '', item.duree ?? '',
+            (item.datamesure?.valeurs ?? []).join(';'),
+            (item.datamesure?.temps   ?? []).join(';')
+        ]);
+    });
+    const contenu = lignes.map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + contenu], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'mosea_session_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+    if (msgEl) { msgEl.textContent = 'Export réussi.'; msgEl.className = 'params-msg success'; }
+}

@@ -184,3 +184,27 @@ async function supprimerCompte() {
 
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', PageEleve);
+
+// ── Export CSV ────────────────────────────────────────────────
+function exporterCSV() {
+    const msgEl = document.getElementById('msg-export');
+    if (!donneesSession || donneesSession.length === 0) {
+        if (msgEl) msgEl.textContent = 'Aucune donnée à exporter.';
+        return;
+    }
+    const lignes = [['Type mesure', 'Date', 'Heure', 'Durée', 'Session liée', 'Valeurs', 'Temps (s)']];
+    donneesSession.forEach(s => {
+        lignes.push([
+            s.typemesure ?? '', s.date ?? '', s.heur ?? '', s.duree ?? '', s.link ?? '',
+            (s.datamesure?.valeurs ?? []).join(';'),
+            (s.datamesure?.temps   ?? []).join(';')
+        ]);
+    });
+    const contenu = lignes.map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + contenu], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'mosea_mes_sessions.csv'; a.click();
+    URL.revokeObjectURL(url);
+    if (msgEl) { msgEl.textContent = 'Export réussi.'; msgEl.className = 'params-msg success'; }
+}

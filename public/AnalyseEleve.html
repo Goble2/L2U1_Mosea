@@ -72,6 +72,16 @@
                     <button class="modal-close" onclick="toggleParametres()">✕</button>
                 </div>
                 <div class="params-body">
+                    <div class="params-block">
+                        <div class="params-block-icon">📥</div>
+                        <div class="params-block-content">
+                            <h3>Exporter les données</h3>
+                            <p>Télécharge toutes vos sessions au format CSV.</p>
+                            <button class="params-btn" onclick="exporterCSV()">Télécharger CSV</button>
+                            <p id="msg-export" class="params-msg"></p>
+                        </div>
+                    </div>
+
                     <div class="params-block params-block--critical">
                         <div class="params-block-icon">⚠️</div>
                         <div class="params-block-content">
